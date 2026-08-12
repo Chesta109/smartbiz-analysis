@@ -1,0 +1,90 @@
+<%- include('../partials/head') %>
+<div class="auth-split">
+  <div class="auth-left">
+    <div class="auth-logo-text">
+      <div class="auth-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+      </div>
+      SmartBiz Insight
+    </div>
+
+    <div class="auth-hero-title">Business data in. Clear decisions out.</div>
+    <div class="auth-hero-subtitle">Track products, customers and sales in one place, then read the numbers as KPIs, trends, low-stock alerts and a revenue forecast.</div>
+
+    <div class="auth-features">
+      <div class="auth-feature">
+        <div class="auth-feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        </div>
+        Revenue, sales, profit and customer KPIs at a glance
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        </div>
+        Rule-based restock alerts from reorder levels
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </div>
+        7-day revenue forecast from historical sales
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      Small Business Decision Support System
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="card-title">Create your account</div>
+      <div class="card-subtitle">New accounts start with the Manager role. The owner can change this in Settings.</div>
+
+      <%- include('../partials/flash') %>
+
+      <form method="POST" action="/register">
+        <div class="field">
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" required autofocus placeholder="Ravi Shetty" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required placeholder="you@business.in" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" minlength="8" required placeholder="At least 8 characters" />
+        </div>
+        <div class="field">
+          <label for="confirm_password">Confirm password</label>
+          <input type="password" id="confirm_password" name="confirm_password" minlength="8" required />
+        </div>
+        <input type="hidden" name="role" value="manager" />
+
+        <button class="btn btn-primary" type="submit" style="width:100%; margin-top: 16px;">Create account</button>
+      </form>
+      
+      <div class="auth-secure" style="justify-content: center; margin-top: 24px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        Passwords are stored hashed; sessions expire on logout.
+      </div>
+
+      <div style="text-align: center; font-size: 13px; color: var(--muted);">
+        Already registered? <a href="/login" style="font-weight: 500;">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const form = document.querySelector('form');
+  form.addEventListener('submit', function(e) {
+    if (document.getElementById('password').value !== document.getElementById('confirm_password').value) {
+      e.preventDefault();
+      alert('Passwords do not match.');
+    }
+  });
+</script>
+</body>
+</html>

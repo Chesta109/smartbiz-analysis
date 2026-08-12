@@ -1,0 +1,13 @@
+<%
+  const initial = (user && user.name) ? user.name.trim().charAt(0).toUpperCase() : '?';
+%>
+<header class="topbar">
+  <div style="display:flex; align-items:center; gap:10px;"><button class="menu-toggle" type="button" data-sidebar-toggle aria-label="Toggle navigation">☰</button><div class="page-title"><%= title %></div></div>
+  <div class="right">
+    <% if (user) { %>
+      <span class="badge-role"><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></span>
+      <div class="avatar"><%= initial %></div>
+      <span><%= user.name %></span>
+    <% } %>
+  </div>
+</header>

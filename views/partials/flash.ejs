@@ -1,0 +1,8 @@
+<% if (typeof messages !== 'undefined') { %>
+  <% (messages.success || []).forEach(function(msg) { %>
+    <div class="flash flash-success"><%= msg %></div>
+  <% }); %>
+  <% (messages.error || []).forEach(function(msg) { %>
+    <div class="flash flash-error"><%= msg %></div>
+  <% }); %>
+<% } %>

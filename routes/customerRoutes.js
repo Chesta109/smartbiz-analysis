@@ -1,0 +1,12 @@
+const express = require("express");
+const controller = require("../controllers/customerController");
+const { isLoggedIn } = require("../middlewares/authMiddleware");
+const asyncHandler = require("../middlewares/asyncHandler");
+const router = express.Router();
+router.use(isLoggedIn);
+router.get("/", asyncHandler(controller.index));
+router.get("/:id", asyncHandler(controller.show));
+router.post("/", asyncHandler(controller.create));
+router.put("/:id", asyncHandler(controller.update));
+router.delete("/:id", asyncHandler(controller.remove));
+module.exports = router;

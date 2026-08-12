@@ -1,0 +1,132 @@
+<%- include('../partials/appStart', { activeNav: '/customers', title: 'Customers', user: (typeof user !== 'undefined' ? user : null) }) %>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--space-4); margin-top: 8px;">
+  <div>
+    <h1 style="margin:0; font-size:24px; font-weight: 700; color: var(--ink);">Customers</h1>
+    <div style="color: var(--muted); font-size: 14px; margin-top: 4px;">Your customer directory and their purchase history.</div>
+  </div>
+  <button class="btn btn-primary" onclick="openCustomerModal()">+ Add customer</button>
+</div>
+
+<div class="card" style="padding: 0;">
+  <div style="padding: 24px 24px 0;">
+    <div style="font-weight: 600; font-size: 16px; color: var(--ink); margin-bottom: 4px;"><%= customers.length %> customers</div>
+    <div style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Select a customer to view their purchase history.</div>
+    
+    <form method="GET" action="/customers" style="display: flex; gap: 12px; margin-bottom: 24px;">
+      <div class="search-bar" style="flex: 1;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" name="search" placeholder="Search by name, email or phone..." value="<%= filters.search %>" />
+      </div>
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="padding-left: 24px;">Customer</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Orders</th>
+          <th>Total spend</th>
+          <th>Last purchase</th>
+          <th style="padding-right: 24px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% customers.forEach(function(c) { %>
+          <tr>
+            <td style="padding-left: 24px; font-weight: 500; color: var(--ink);"><%= c.name %></td>
+            <td><%= c.email || '—' %></td>
+            <td><%= c.phone || '—' %></td>
+            <td><%= typeof c.orders !== 'undefined' ? c.orders : (c.order_count || 1) %></td>
+            <td>₹<%= typeof c.total_spend !== 'undefined' ? Number(c.total_spend).toFixed(0) : (c.total_amount ? Number(c.total_amount).toFixed(0) : '0') %></td>
+            <td>
+              <% if (c.last_purchase || c.last_purchase_date) { %>
+                <%= new Date(c.last_purchase || c.last_purchase_date).toISOString().split('T')[0] %>
+              <% } else { %>
+                <span class="badge badge-secondary" style="background: var(--bg); color: var(--muted);">• No purchases</span>
+              <% } %>
+            </td>
+            <td style="padding-right: 24px;">
+              <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary);"
+                onclick='openCustomerModal(<%- JSON.stringify(c) %>); return false;'>View</a>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (customers.length === 0) { %>
+          <tr><td colspan="7" style="text-align:center; color: var(--muted); padding: 32px 0;">No customers found.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="customerModalBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div class="modal-title" id="customerModalTitle">Add customer</div>
+        <button class="modal-close" onclick="closeCustomerModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    <form id="customerForm" method="POST" action="/customers">
+      <input type="hidden" name="_method" id="cFormMethod" value="POST" />
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" id="c_name" required maxlength="150" />
+      </div>
+      <div class="field">
+        <label>Email (optional)</label>
+        <input type="email" name="email" id="c_email" />
+      </div>
+      <div class="field">
+        <label>Phone (optional)</label>
+        <input type="text" name="phone" id="c_phone" maxlength="30" />
+      </div>
+      <div class="field">
+        <label>Address (optional)</label>
+        <input type="text" name="address" id="c_address" maxlength="255" />
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap: 12px; margin-top: 32px;">
+        <button type="button" class="btn btn-outline" onclick="closeCustomerModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="customerSubmitBtn">Add customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCustomerModal(customer) {
+    const form = document.getElementById('customerForm');
+    const title = document.getElementById('customerModalTitle');
+    const submitBtn = document.getElementById('customerSubmitBtn');
+    const methodField = document.getElementById('cFormMethod');
+
+    if (customer && customer.id) {
+      title.textContent = 'Edit customer';
+      submitBtn.textContent = 'Save changes';
+      form.action = '/customers/' + customer.id;
+      methodField.value = 'PUT';
+      document.getElementById('c_name').value = customer.name;
+      document.getElementById('c_email').value = customer.email || '';
+      document.getElementById('c_phone').value = customer.phone || '';
+      document.getElementById('c_address').value = customer.address || '';
+    } else {
+      title.textContent = 'Add customer';
+      submitBtn.textContent = 'Add customer';
+      form.action = '/customers';
+      methodField.value = 'POST';
+      form.reset();
+    }
+    document.getElementById('customerModalBackdrop').classList.add('open');
+  }
+
+  function closeCustomerModal() {
+    document.getElementById('customerModalBackdrop').classList.remove('open');
+  }
+</script>
+<%- include('../partials/appEnd') %>

@@ -1,0 +1,32 @@
+<%- include('../partials/appStart', { activeNav: '/customers', title, user: (typeof user !== 'undefined' ? user : null) }) %>
+      <a href="/customers" style="color: var(--color-text-muted); font-size: 13px;">&larr; Back to customers</a>
+      <h1 style="margin: var(--space-2) 0 0;"><%= customer.name %></h1>
+      <div class="card-subtitle">
+        <%= customer.email || 'No email on file' %> · <%= customer.phone || 'No phone on file' %>
+      </div>
+
+      <div class="card" style="margin-top: var(--space-4);">
+        <div class="card-title">Purchase history</div>
+        <div class="card-subtitle">Every line item this customer has purchased, most recent first.</div>
+        <table>
+          <thead>
+            <tr><th>Sale #</th><th>Date</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <% history.forEach(function(h) { %>
+              <tr>
+                <td>#<%= h.sale_id %></td>
+                <td><%= new Date(h.sale_date).toLocaleDateString() %></td>
+                <td><%= h.product_name %></td>
+                <td><%= h.quantity %></td>
+                <td>₹<%= Number(h.unit_price).toFixed(2) %></td>
+                <td><span class="<%= h.status === 'refunded' ? 'status-low' : 'status-ok' %> status-dot"><%= h.status %></span></td>
+              </tr>
+            <% }); %>
+            <% if (history.length === 0) { %>
+              <tr><td colspan="6" style="text-align:center; color: var(--color-text-muted);">No purchases yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+<%- include('../partials/appEnd') %>

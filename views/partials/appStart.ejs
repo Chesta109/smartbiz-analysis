@@ -1,0 +1,7 @@
+<%- include('head') %>
+<body class="app-body">
+  <div class="app-shell">
+    <%- include('sidebar', { activeNav: typeof activeNav !== 'undefined' ? activeNav : '' }) %>
+    <div class="app-area">
+      <%- include('navbar', { title, user: (typeof user !== 'undefined' ? user : null) }) %>
+      <main class="app-content"><%- include('flash') %>

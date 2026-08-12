@@ -1,0 +1,171 @@
+<%- include('../partials/appStart', { activeNav: '/products', title: 'Products', user: (typeof user !== 'undefined' ? user : null) }) %>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--space-4); margin-top: 8px;">
+  <div>
+    <h1 style="margin:0; font-size:24px; font-weight: 700; color: var(--ink);">Products</h1>
+    <div style="color: var(--muted); font-size: 14px; margin-top: 4px;">Your product catalog and stock levels.</div>
+  </div>
+  <button class="btn btn-primary" onclick="openProductModal()">+ Add product</button>
+</div>
+
+<div class="card" style="padding: 0;">
+  <div style="padding: 24px 24px 0;">
+    <div style="font-weight: 600; font-size: 16px; color: var(--ink); margin-bottom: 4px;"><%= products.length %> products</div>
+    <div style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Manage your inventory and reorder levels.</div>
+    
+    <form method="GET" action="/products" style="display: flex; gap: 12px; margin-bottom: 24px;">
+      <div class="search-bar" style="flex: 2;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" name="search" placeholder="Search products..." value="<%= filters.search %>" />
+      </div>
+      <div style="flex: 1;">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+          <option value="">All categories</option>
+          <% ['Electronics','Household','Stationery'].forEach(function(c) { %>
+            <option value="<%= c %>" <%= filters.category === c ? 'selected' : '' %>><%= c %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div style="flex: 1;">
+        <select name="stockLevel" class="form-select" onchange="this.form.submit()">
+          <option value="">All stock levels</option>
+          <option value="in" <%= filters.stockLevel === 'in' ? 'selected' : '' %>>In stock</option>
+          <option value="low" <%= filters.stockLevel === 'low' ? 'selected' : '' %>>Low stock</option>
+          <option value="out" <%= filters.stockLevel === 'out' ? 'selected' : '' %>>Out of stock</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="padding-left: 24px;">Product</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Cost</th>
+          <th>Stock</th>
+          <th>Reorder</th>
+          <th>Status</th>
+          <th style="padding-right: 24px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% products.forEach(function(p) { %>
+          <% let statusClass = 'status-ok', statusLabel = 'In stock';
+             if (p.stock_qty === 0) { statusClass = 'status-out'; statusLabel = 'Out of stock'; }
+             else if (p.stock_qty <= p.reorder_level) { statusClass = 'status-low'; statusLabel = 'Low stock'; } %>
+          <tr>
+            <td style="padding-left: 24px; font-weight: 500;"><%= p.name %></td>
+            <td><%= p.category %></td>
+            <td>₹<%= Number(p.price).toFixed(2) %></td>
+            <td>₹<%= Number(p.cost).toFixed(2) %></td>
+            <td><%= p.stock_qty %></td>
+            <td><%= p.reorder_level %></td>
+            <td><span class="<%= statusClass %> status-dot"><%= statusLabel %></span></td>
+            <td style="padding-right: 24px;">
+              <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary);"
+                 onclick='openProductModal(<%- JSON.stringify(p) %>); return false;'>Edit</a>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (products.length === 0) { %>
+          <tr><td colspan="8" style="text-align:center; color: var(--muted); padding: 32px 0;">No products match these filters.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add/Edit modal -->
+<div class="modal-backdrop" id="productModalBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div class="modal-title" id="productModalTitle">Add product</div>
+          <div style="font-size: 14px; color: var(--muted);">Stock quantity and reorder level drive the low-stock alerts on your dashboard.</div>
+        </div>
+        <button class="modal-close" onclick="closeProductModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    <form id="productForm" method="POST" action="/products">
+      <input type="hidden" name="_method" id="formMethod" value="POST" />
+      <div class="field">
+        <label>Product name</label>
+        <input type="text" name="name" id="f_name" required maxlength="150" />
+      </div>
+      <div class="field">
+        <label>SKU</label>
+        <input type="text" name="sku" id="f_sku" required maxlength="60" />
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <input type="text" name="category" id="f_category" required maxlength="100" />
+      </div>
+      <div class="row g-3" style="margin-bottom: 16px;">
+        <div class="col-md-6">
+          <label class="form-label">Selling price (₹)</label>
+          <input class="form-control" type="number" step="0.01" min="0" name="price" id="f_price" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Cost price (₹)</label>
+          <input class="form-control" type="number" step="0.01" min="0" name="cost" id="f_cost" required />
+        </div>
+      </div>
+      <div class="row g-3" style="margin-bottom: 16px;">
+        <div class="col-md-6">
+          <label class="form-label">Stock quantity</label>
+          <input class="form-control" type="number" min="0" name="stock_qty" id="f_stock" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Reorder level</label>
+          <input class="form-control" type="number" min="0" name="reorder_level" id="f_reorder" required />
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap: 12px; margin-top: 32px;">
+        <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="productSubmitBtn">Add product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openProductModal(product) {
+    const form = document.getElementById('productForm');
+    const title = document.getElementById('productModalTitle');
+    const submitBtn = document.getElementById('productSubmitBtn');
+    const methodField = document.getElementById('formMethod');
+
+    if (product && product.id) {
+      title.textContent = 'Edit product';
+      submitBtn.textContent = 'Save changes';
+      form.action = '/products/' + product.id;
+      methodField.value = 'PUT';
+      document.getElementById('f_name').value = product.name;
+      document.getElementById('f_sku').value = product.sku;
+      document.getElementById('f_category').value = product.category;
+      document.getElementById('f_price').value = product.price;
+      document.getElementById('f_cost').value = product.cost;
+      document.getElementById('f_stock').value = product.stock_qty;
+      document.getElementById('f_reorder').value = product.reorder_level;
+    } else {
+      title.textContent = 'Add product';
+      submitBtn.textContent = 'Add product';
+      form.action = '/products';
+      methodField.value = 'POST';
+      form.reset();
+    }
+    document.getElementById('productModalBackdrop').classList.add('open');
+  }
+
+  function closeProductModal() {
+    document.getElementById('productModalBackdrop').classList.remove('open');
+  }
+</script>
+<script src="/js/products.js"></script>
+<%- include('../partials/appEnd') %>

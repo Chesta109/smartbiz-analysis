@@ -1,0 +1,241 @@
+<%- include('../partials/appStart', { activeNav: '/sales', title: 'Sales', user: (typeof user !== 'undefined' ? user : null) }) %>
+<div id="jsError" class="flash flash-error" style="display:none;"></div>
+
+<section class="page-heading" style="margin-top: 8px;">
+  <h1 style="font-size:24px; font-weight: 700; color: var(--ink); margin-bottom: 4px;">Sales</h1>
+  <p>Record a sale and review recent transactions.</p>
+</section>
+
+<div class="grid grid-1-2" style="grid-template-columns: 2fr 1fr; margin-bottom: var(--space-4);">
+  <div class="card" style="padding: 0;">
+    <div style="padding: 24px; border-bottom: 1px solid var(--line);">
+      <div class="card-title">New sale</div>
+      <div class="card-subtitle">Add one or more products, then complete the sale.</div>
+    </div>
+    
+    <div style="padding: 24px;">
+      <div class="field">
+        <label>Customer</label>
+        <select id="customerSelect" class="form-select">
+          <option value="">Walk-in Customer</option>
+          <% customers.forEach(function(c) { %>
+            <option value="<%= c.id %>"><%= c.name %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="sale-add">
+        <div class="field" style="margin-bottom: 0;">
+          <label>Product</label>
+          <select id="productSelect" class="form-select">
+            <option value="">Select a product</option>
+            <% products.forEach(function(p) { %>
+              <option value="<%= p.id %>" data-price="<%= p.price %>" data-stock="<%= p.stock_qty %>">
+                <%= p.name %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom: 0;">
+          <label>Qty</label>
+          <input type="number" id="quantityInput" class="form-control" min="1" value="1" />
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addLineItem()">+ Add</button>
+      </div>
+
+      <div class="table-wrap" style="margin-top: 32px; border-radius: var(--radius-sm); border: 1px solid var(--line);">
+        <table style="margin: 0;">
+          <thead style="background: var(--bg);">
+            <tr>
+              <th style="padding: 12px 16px;">Product</th>
+              <th style="padding: 12px 16px;">Qty</th>
+              <th style="padding: 12px 16px;">Unit price</th>
+              <th style="padding: 12px 16px;">Total</th>
+            </tr>
+          </thead>
+          <tbody id="lineItemsBody">
+            <tr><td colspan="4" style="text-align: center; color: var(--muted); padding: 24px;">No line items yet. Add a product above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 16px; margin-top: 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:600; font-size: 14px; color: var(--ink);">Grand total</div>
+            <div style="font-size: 13px; color: var(--muted);" id="lineItemSummary">0 line items · stock reduces on completion</div>
+          </div>
+          <div style="font-size:24px; font-weight:700; color: var(--ink);" id="grandTotal">₹0</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top: 24px; width: auto;" onclick="completeSale()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        Complete sale
+      </button>
+    </div>
+  </div>
+
+  <div class="card" style="height: fit-content;">
+    <div class="card-title">Today at a glance</div>
+    <div class="card-subtitle" style="margin-bottom: 24px;">Recorded sales for <%= new Date().toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) %>.</div>
+    
+    <div class="grid grid-2" style="gap: 24px;">
+      <div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 500;">Sales today</div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--ink);"><%= todaySummary.sales_today %></div>
+      </div>
+      <div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 500;">Revenue today</div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--ink);">₹<%= Number(todaySummary.revenue_today).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></div>
+      </div>
+      <div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 500;">Items sold</div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--ink);"><%= todaySummary.items_sold %></div>
+      </div>
+      <div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 500;">Avg. sale value</div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--ink);">₹<%= Number(todaySummary.avg_sale_value).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="padding: 0; margin-bottom: 32px;">
+  <div style="padding: 24px 24px 0;">
+    <div class="card-title">Recent transactions</div>
+    <div class="card-subtitle" style="margin-bottom: 24px;">Every sale is stored with its line items in a single database transaction.</div>
+  </div>
+  
+  <div class="table-wrap">
+    <table>
+      <thead style="background: var(--bg);">
+        <tr>
+          <th style="padding-left: 24px;">Transaction</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Recorded by</th>
+          <th>Items</th>
+          <th>Amount</th>
+          <th style="padding-right: 24px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recentSales.forEach(function(s) { %>
+          <tr>
+            <td style="padding-left: 24px; font-weight: 500; color: var(--muted);">#<%= s.id %></td>
+            <td style="font-weight: 500; color: var(--ink);"><%= s.customer_name %></td>
+            <td><%= new Date(s.sale_date).toISOString().split('T')[0] %></td>
+            <td><%= s.staff_name %></td>
+            <td><%= s.item_count %></td>
+            <td style="font-weight: 600;">₹<%= Number(s.total_amount).toLocaleString('en-IN', {maximumFractionDigits: 0}) %></td>
+            <td style="padding-right: 24px;">
+              <span class="<%= s.status === 'refunded' ? 'status-low' : 'status-ok' %> status-dot" style="text-transform: capitalize;"><%= s.status %></span>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (recentSales.length === 0) { %>
+          <tr><td colspan="7" style="text-align:center; color: var(--muted); padding: 32px 0;">No sales recorded yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const lineItems = []; // { productId, name, quantity, unitPrice }
+
+  function renderLineItems() {
+    const body = document.getElementById('lineItemsBody');
+    body.innerHTML = '';
+    let total = 0;
+
+    if (lineItems.length === 0) {
+      body.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--muted); padding: 24px;">No line items yet. Add a product above.</td></tr>';
+      document.getElementById('grandTotal').textContent = '₹0';
+      document.getElementById('lineItemSummary').textContent = '0 line items · stock reduces on completion';
+      return;
+    }
+
+    lineItems.forEach((item, idx) => {
+      const lineTotal = item.unitPrice * item.quantity;
+      total += lineTotal;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding: 12px 16px;">
+          <div style="font-weight: 500; color: var(--ink);">${item.name}</div>
+          <a href="#" onclick="removeLineItem(${idx}); return false;" style="color: var(--muted); font-size: 12px;">Remove</a>
+        </td>
+        <td style="padding: 12px 16px;">${item.quantity}</td>
+        <td style="padding: 12px 16px;">₹${item.unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+        <td style="padding: 12px 16px; font-weight: 500;">₹${lineTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+      `;
+      body.appendChild(tr);
+    });
+
+    document.getElementById('grandTotal').textContent = '₹' + total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+    document.getElementById('lineItemSummary').textContent =
+      lineItems.length + ' line item' + (lineItems.length === 1 ? '' : 's') + ' · stock reduces on completion';
+  }
+
+  function addLineItem() {
+    const select = document.getElementById('productSelect');
+    const qtyInput = document.getElementById('quantityInput');
+    const option = select.options[select.selectedIndex];
+    const productId = select.value;
+    const quantity = parseInt(qtyInput.value, 10);
+
+    if (!productId) return showError('Select a product first.');
+    if (!quantity || quantity < 1) return showError('Enter a valid quantity.');
+
+    const stock = parseInt(option.dataset.stock, 10);
+    if (quantity > stock) return showError(`Only ${stock} in stock for ${option.text}.`);
+
+    lineItems.push({
+      productId: parseInt(productId, 10),
+      name: option.text.trim(),
+      quantity,
+      unitPrice: parseFloat(option.dataset.price),
+    });
+    renderLineItems();
+    qtyInput.value = 1;
+    select.value = '';
+  }
+
+  function removeLineItem(idx) {
+    lineItems.splice(idx, 1);
+    renderLineItems();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('jsError');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  async function completeSale() {
+    if (lineItems.length === 0) return showError('Add at least one product before completing the sale.');
+
+    const payload = {
+      customerId: document.getElementById('customerSelect').value || null,
+      items: lineItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    };
+
+    try {
+      const res = await fetch('/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return showError(data.message || 'Could not complete the sale.');
+      }
+      window.location.reload();
+    } catch (err) {
+      showError('Network error — please try again.');
+    }
+  }
+</script>
+<%- include('../partials/appEnd') %>
