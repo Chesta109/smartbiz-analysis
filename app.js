@@ -1,3 +1,4 @@
+const analyticsRoutes = require('./routes/analyticsRoutes');
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -56,6 +57,8 @@ app.use(authRoutes); // Handles POST /login and /register
 app.use(uiRoutes);
 
 app.get('/', (req, res) => res.redirect('/dashboard'));
+
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 fallthrough must be after all routes, before errorHandler
 app.use((req, res, next) => {

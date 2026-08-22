@@ -1,30 +1,42 @@
 const { renderView } = require("../utils/viewLocals");
 const pool = require("../config/db");
+const analyticsService = require("../services/analyticsService");
 
 async function index(req, res) {
   const [
-    [summary],
+    summary,
+    profitSummary,
     [lowStockItems],
-    [{ totalProducts }],
-    [{ totalCustomers }],
   ] = await Promise.all([
+    analyticsService.getSummary(),
+    analyticsService.getProfitSummary(),
     pool.query(
-      `SELECT COALESCE(SUM(total_amount), 0) AS revenue, COUNT(*) AS sales FROM sales WHERE status = 'completed'`,
+      "SELECT name, stock_qty, reorder_level FROM products WHERE stock_qty <= reorder_level ORDER BY stock_qty ASC LIMIT 5"
     ),
-    pool.query(
-      "SELECT name, stock_qty, reorder_level FROM products WHERE stock_qty <= reorder_level ORDER BY stock_qty ASC LIMIT 5",
-    ),
-    pool.query("SELECT COUNT(*) AS totalProducts FROM products"),
-    pool.query("SELECT COUNT(*) AS totalCustomers FROM customers"),
   ]);
+
   renderView(req, res, "dashboard/index", {
     title: "Dashboard",
+
     metrics: [
-      { label: "Revenue", value: `₹${Number(summary.revenue).toFixed(0)}` },
-      { label: "Completed sales", value: summary.sales },
-      { label: "Products", value: totalProducts },
-      { label: "Customers", value: totalCustomers },
+      {
+        label: "Total Revenue",
+        value: `₹${Number(summary.total_revenue || 0).toFixed(2)}`
+      },
+      {
+        label: "Total Orders",
+        value: summary.total_orders || 0
+      },
+      {
+        label: "Total Profit",
+        value: `₹${Number(profitSummary.total_profit || 0).toFixed(2)}`
+      },
+      {
+        label: "Profit Margin",
+        value: `${Number(profitSummary.profit_margin_percentage || 0).toFixed(2)}%`
+      }
     ],
+
     lowStockItems,
     recommendations: [],
     topProducts: [],
