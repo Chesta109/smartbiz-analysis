@@ -1,6 +1,6 @@
-const analyticsRoutes = require('./routes/analyticsRoutes');
 require('dotenv').config();
 const express = require('express');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 const path = require('path');
 
 const sessionMiddleware = require('./config/session');
