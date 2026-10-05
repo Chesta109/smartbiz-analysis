@@ -51,6 +51,8 @@ function buildViewLocals(req, data = {}) {
     revenueTrend: data.revenueTrend ?? [],
     history: data.history ?? [],
     customer: data.customer ?? null,
+    forecastResult: data.forecastResult ?? null,
+    forecastChart: data.forecastChart ?? null,
   };
 }
 

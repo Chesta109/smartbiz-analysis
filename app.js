@@ -49,11 +49,11 @@ app.use((req, res, next) => {
 });
 
 app.use('/products', productRoutes);
-app.use('/api/products', productRoutes); // same router; controller branches on req.originalUrl
+app.use('/api/products', productRoutes);
 app.use('/customers', customerRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/sales', salesRoutes);
-app.use(authRoutes); // Handles POST /login and /register
+app.use(authRoutes);
 app.use(uiRoutes);
 
 app.get('/', (req, res) => res.redirect('/dashboard'));

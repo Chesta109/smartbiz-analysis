@@ -13,6 +13,9 @@ router.get("/order-status", analyticsController.getOrderStatus);
 // Monthly sales
 router.get("/monthly-sales", analyticsController.getMonthlySales);
 
+// Daily sales (used when only one month of data exists)
+router.get("/daily-sales", analyticsController.getDailySales);
+
 // Product performance
 router.get("/products", analyticsController.getProductPerformance);
 

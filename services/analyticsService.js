@@ -320,6 +320,72 @@ async function getMonthlySales(
 
 
 /* =========================================================
+   DAILY SALES
+   Used by the Revenue trend chart when the selected period
+   only contains one month of data (a monthly line needs 2+).
+   ========================================================= */
+
+async function getDailySales(
+    period = "30",
+    category = "all"
+) {
+
+    const { condition, params } =
+        getCombinedFilters(
+            period,
+            category
+        );
+
+    const categoryJoin =
+        category !== "all"
+            ? `
+                INNER JOIN order_items oi
+                    ON oi.sale_id = s.id
+
+                INNER JOIN products p
+                    ON p.id = oi.product_id
+              `
+            : "";
+
+    const [rows] = await pool.query(
+        `
+        SELECT
+            DATE_FORMAT(
+                s.created_at,
+                '%Y-%m-%d'
+            ) AS day,
+
+            COUNT(DISTINCT s.id)
+                AS total_orders,
+
+            COALESCE(
+                SUM(s.total_amount),
+                0
+            ) AS revenue
+
+        FROM sales s
+
+        ${categoryJoin}
+
+        WHERE s.status = 'completed'
+        AND ${condition}
+
+        GROUP BY
+            DATE_FORMAT(
+                s.created_at,
+                '%Y-%m-%d'
+            )
+
+        ORDER BY day
+        `,
+        params
+    );
+
+    return rows;
+}
+
+
+/* =========================================================
    PRODUCT PERFORMANCE
    Original logic preserved.
    ========================================================= */
@@ -834,6 +900,7 @@ module.exports = {
     getSummary,
     getOrderStatus,
     getMonthlySales,
+    getDailySales,
     getProductPerformance,
     getCategoryPerformance,
     getCustomerPerformance,

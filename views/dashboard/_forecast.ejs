@@ -1,0 +1,130 @@
+<style>
+.ml-forecast { margin-bottom: var(--space-4); }
+.ml-forecast__head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 16px; margin-bottom: 20px;
+}
+.ml-forecast__body { display: flex; gap: 24px; align-items: stretch; }
+.ml-forecast__chart { flex: 1; min-width: 0; }
+.ml-forecast__chart svg { width: 100%; height: auto; display: block; }
+.ml-forecast__panel {
+  width: 290px; flex-shrink: 0; padding: 20px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+.ml-forecast__total {
+  font-size: 26px; font-weight: 700; color: var(--ink); margin: 12px 0 4px;
+}
+.ml-forecast__range { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.ml-forecast__change { font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+.ml-forecast__change--increasing { color: var(--green); }
+.ml-forecast__change--decreasing { color: var(--red); }
+.ml-forecast__change--flat { color: var(--muted); }
+.ml-forecast__note { font-size: 11px; color: var(--muted); line-height: 1.6; }
+.ml-forecast__empty { color: var(--muted); font-size: 13px; padding: 24px 0; }
+
+.ml-legend {
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 12px; color: var(--ink); margin-bottom: 16px;
+}
+.ml-legend > div { display: flex; align-items: center; gap: 8px; }
+.ml-swatch { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid; }
+.ml-swatch--history { border-color: #2563eb; }
+.ml-swatch--forecast { border-color: #10b981; border-top-style: dashed; }
+.ml-swatch--band { height: 10px; border: none; background: rgba(16, 185, 129, 0.18); border-radius: 2px; }
+
+.ml-grid { stroke: var(--line); stroke-width: 1; }
+.ml-axis { font-size: 11px; fill: var(--muted); font-family: inherit; }
+.ml-axis--accent { fill: #059669; font-weight: 600; }
+.ml-divider { stroke: #a7f3d0; stroke-width: 1; stroke-dasharray: 3 3; }
+.ml-area { fill: rgba(37, 99, 235, 0.08); }
+.ml-band { fill: rgba(16, 185, 129, 0.16); }
+.ml-line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; }
+.ml-line--history { stroke: #2563eb; }
+.ml-line--forecast { stroke: #10b981; stroke-dasharray: 6 5; }
+.ml-dot { fill: #fff; stroke: #10b981; stroke-width: 2; }
+
+@media (max-width: 900px) {
+  .ml-forecast__body { flex-direction: column; }
+  .ml-forecast__panel { width: 100%; }
+}
+</style>
+
+<section class="card ml-forecast">
+  <div class="ml-forecast__head">
+    <div>
+      <div class="card-title">Revenue forecast — next 7 days</div>
+      <div class="card-subtitle">Solid line is actual daily revenue, dashed line is the predicted revenue.</div>
+    </div>
+    <a href="/reports" class="btn btn-secondary" style="height: 36px; font-size: 13px; display:inline-flex; align-items:center; gap:6px;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+      Reports
+    </a>
+  </div>
+  <% if (!forecastChart) { %>
+    <div class="ml-forecast__empty">
+      <% if (!forecastResult) { %>
+        Forecast data did not reach this page (forecastResult is empty).
+      <% } else if (forecastResult.error) { %>
+        <%= forecastResult.error %>
+      <% } else { %>
+        The forecast script ran but returned no data points
+        (history: <%= (forecastResult.history || []).length %>, forecast: <%= (forecastResult.forecast || []).length %>).
+      <% } %>
+    </div>
+  <% } else { %>
+  <div class="ml-forecast__body">
+
+    <div class="ml-forecast__chart">
+      <svg viewBox="0 0 <%= forecastChart.width %> <%= forecastChart.height %>" role="img"
+           aria-label="Daily revenue history and 7-day forecast">
+
+        <% forecastChart.yTicks.forEach(function(t) { %>
+          <line x1="<%= forecastChart.plot.left %>" x2="<%= forecastChart.plot.right %>" y1="<%= t.y.toFixed(1) %>" y2="<%= t.y.toFixed(1) %>" class="ml-grid"/>
+          <text x="<%= forecastChart.plot.left - 8 %>" y="<%= (t.y + 4).toFixed(1) %>" text-anchor="end" class="ml-axis"><%= t.label %></text>
+        <% }); %>
+
+        <line x1="<%= forecastChart.forecastStartX.toFixed(1) %>" x2="<%= forecastChart.forecastStartX.toFixed(1) %>"
+              y1="<%= forecastChart.plot.top %>" y2="<%= forecastChart.plot.bottom %>" class="ml-divider"/>
+        <text x="<%= (forecastChart.forecastStartX + 6).toFixed(1) %>" y="<%= forecastChart.plot.top + 10 %>" class="ml-axis ml-axis--accent">Forecast</text>
+
+        <polygon points="<%= forecastChart.historyArea %>" class="ml-area"/>
+        <polygon points="<%= forecastChart.bandPolygon %>" class="ml-band"/>
+        <polyline points="<%= forecastChart.historyLine %>" class="ml-line ml-line--history"/>
+        <polyline points="<%= forecastChart.forecastLine %>" class="ml-line ml-line--forecast"/>
+
+        <% forecastChart.forecastDots.forEach(function(p) { %>
+          <circle cx="<%= p.x.toFixed(1) %>" cy="<%= p.y.toFixed(1) %>" r="4" class="ml-dot">
+            <title><%= p.label %>: <%= p.value %></title>
+          </circle>
+        <% }); %>
+
+        <% forecastChart.xLabels.forEach(function(l) { %>
+          <text x="<%= l.x.toFixed(1) %>" y="<%= forecastChart.plot.bottom + 20 %>" text-anchor="middle" class="ml-axis"><%= l.label %></text>
+        <% }); %>
+      </svg>
+    </div>
+
+    <aside class="ml-forecast__panel">
+      <div class="ml-forecast__total"><%= forecastChart.totalPredictedText %></div>
+      <div class="ml-forecast__range">Expected total revenue for <%= forecastChart.rangeLabel %>.</div>
+
+      <% if (forecastChart.changeText) { %>
+        <div class="ml-forecast__change ml-forecast__change--<%= forecastChart.trend %>"><%= forecastChart.changeText %></div>
+      <% } %>
+
+      <div class="ml-legend">
+        <div><span class="ml-swatch ml-swatch--history"></span> Actual revenue</div>
+        <div><span class="ml-swatch ml-swatch--forecast"></span> Forecast</div>
+        <div><span class="ml-swatch ml-swatch--band"></span> Likely range</div>
+      </div>
+
+      <div class="ml-forecast__note">
+        Model: <%= forecastChart.modelName %>, retrained on your sales every time this page loads.
+        <% if (forecastChart.backtestText) { %><br><%= forecastChart.backtestText %>.<% } %>
+        <% if (forecastChart.lastDataText) { %><br>Latest sale recorded: <%= forecastChart.lastDataText %>.<% } %>
+      </div>
+    </aside>
+
+  </div>
+  <% } %>
+</section>

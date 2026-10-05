@@ -1,6 +1,6 @@
 
 -- Overall Sales Summary
--- CREATE OR REPLACE VIEW vw_sales_summary AS
+CREATE OR REPLACE VIEW vw_sales_summary AS
 SELECT
     COUNT(*) AS total_orders,
     SUM(total_amount) AS total_revenue,

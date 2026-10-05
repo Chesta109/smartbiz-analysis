@@ -78,6 +78,28 @@ async function getMonthlySales(req, res, next) {
 }
 
 /* =========================================================
+   DAILY SALES
+   ========================================================= */
+
+async function getDailySales(req, res, next) {
+    try {
+        const { period, category } = getFilters(req);
+
+        const data = await analyticsService.getDailySales(
+            period,
+            category
+        );
+
+        res.json({
+            success: true,
+            data
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/* =========================================================
    PRODUCT PERFORMANCE
    ========================================================= */
 
@@ -255,6 +277,7 @@ module.exports = {
     getSummary,
     getOrderStatus,
     getMonthlySales,
+    getDailySales,
     getProductPerformance,
     getCategoryPerformance,
     getCustomerPerformance,

@@ -192,252 +192,206 @@ async function loadCategories() {
    LOAD REVENUE TREND
    ========================================================= */
 
+function formatTrendLabel(label) {
+    // "2026-09-06" -> "Sep 06"; "2026-09" stays as it is
+    const parts = String(label).split('-');
+
+    if (parts.length === 3) {
+        const months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        return `${months[Number(parts[1]) - 1]} ${parts[2]}`;
+    }
+
+    return label;
+}
+
 async function loadRevenueTrend() {
+    const container = document.getElementById('revenue-trend-chart');
+
+    if (!container) {
+        console.error('Revenue trend container not found');
+        return;
+    }
+
     try {
         const response = await fetch(
             getAnalyticsUrl('/api/analytics/monthly-sales')
         );
 
         if (!response.ok) {
-            throw new Error(
-                `Revenue trend API error: ${response.status}`
-            );
+            throw new Error(`Revenue trend API error: ${response.status}`);
         }
 
         const result = await response.json();
-        const salesData = result.data || [];
+        let items = (result.data || []).map(item => ({
+            label: item.month,
+            revenue: Number(item.revenue || 0)
+        }));
 
-        const container = document.getElementById(
-            'revenue-trend-chart'
-        );
+        // A line needs at least 2 points. With only one month of sales,
+        // draw the same period day by day instead.
+        let isDaily = false;
 
-        if (!container) {
-            console.error(
-                'Revenue trend container not found'
-            );
-            return;
+        if (items.length < 2) {
+            try {
+                const dailyResponse = await fetch(
+                    getAnalyticsUrl('/api/analytics/daily-sales')
+                );
+
+                if (dailyResponse.ok) {
+                    const dailyResult = await dailyResponse.json();
+                    const dailyItems = (dailyResult.data || []).map(item => ({
+                        label: item.day,
+                        revenue: Number(item.revenue || 0)
+                    }));
+
+                    if (dailyItems.length >= 2) {
+                        items = dailyItems;
+                        isDaily = true;
+                    }
+                }
+            } catch (dailyError) {
+                console.error('Daily revenue fallback failed:', dailyError);
+            }
         }
 
-        if (salesData.length === 0) {
+        if (items.length === 0) {
             container.innerHTML = `
-                <div style="
-                    text-align:center;
-                    color:var(--muted);
-                    font-size:13px;
-                    padding-top:80px;
-                ">
-                    No revenue data available
-                    for the selected period.
+                <div style="text-align:center; color:var(--muted); font-size:13px;">
+                    No revenue data available for the selected period.
                 </div>
             `;
             return;
         }
 
-        const revenues = salesData.map(
-            item => Number(item.revenue || 0)
-        );
+        const revenues = items.map(item => item.revenue);
+        const maxRevenue = Math.max(...revenues, 1);
 
-        const maxRevenue = Math.max(...revenues);
-        const minRevenue = Math.min(...revenues);
-
+        // Fixed-size drawing area, scaled without stretching.
         const width = 1000;
-        const height = 220;
-        const padding = 35;
+        const height = 260;
+        const padLeft = 70;
+        const padRight = 40;
+        const padTop = 40;
+        const padBottom = 40;
 
-        const chartWidth =
-            width - padding * 2;
+        const chartWidth = width - padLeft - padRight;
+        const chartHeight = height - padTop - padBottom;
+        const baseY = height - padBottom;
 
-        const chartHeight =
-            height - padding * 2;
+        const xAt = index =>
+            items.length === 1
+                ? padLeft + chartWidth / 2
+                : padLeft + (index / (items.length - 1)) * chartWidth;
 
-        const points = salesData.map(
-            (item, index) => {
+        const yAt = value => padTop + (1 - value / maxRevenue) * chartHeight;
 
-                const x =
-                    salesData.length === 1
-                        ? width / 2
-                        : padding +
-                          (index /
-                              (salesData.length - 1)) *
-                          chartWidth;
+        const points = items.map((item, index) => ({
+            x: xAt(index),
+            y: yAt(item.revenue),
+            label: formatTrendLabel(item.label),
+            revenue: item.revenue
+        }));
 
-                const y =
-                    maxRevenue === minRevenue
-                        ? height / 2
-                        : padding +
-                          (
-                              1 -
-                              (
-                                  revenues[index] -
-                                  minRevenue
-                              ) /
-                              (
-                                  maxRevenue -
-                                  minRevenue
-                              )
-                          ) *
-                          chartHeight;
-
-                return {
-                    x,
-                    y,
-                    month: item.month,
-                    revenue: revenues[index]
-                };
-            }
-        );
-
-        const linePoints = points
-            .map(
-                point =>
-                    `${point.x},${point.y}`
-            )
-            .join(' ');
+        const linePoints = points.map(p => `${p.x},${p.y}`).join(' ');
 
         const areaPoints = [
-            `${points[0].x},${height - padding}`,
-
-            ...points.map(
-                point =>
-                    `${point.x},${point.y}`
-            ),
-
-            `${points[points.length - 1].x},${height - padding}`
+            `${points[0].x},${baseY}`,
+            ...points.map(p => `${p.x},${p.y}`),
+            `${points[points.length - 1].x},${baseY}`
         ].join(' ');
 
-        const labels = points
-            .map(
-                point => `
-                    <text
-                        x="${point.x}"
-                        y="${height - 8}"
-                        text-anchor="middle"
-                        font-size="11"
-                        fill="#64748b"
-                    >
-                        ${point.month}
-                    </text>
-                `
-            )
-            .join('');
+        const gridLines = [0, 0.5, 1].map(fraction => {
+            const value = maxRevenue * fraction;
+            const y = yAt(value);
+            return `
+                <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}"
+                      stroke="#e5e7eb" stroke-width="1" />
+                <text x="${padLeft - 10}" y="${y + 4}" text-anchor="end"
+                      font-size="12" fill="#64748b">
+                    ${formatIndianCurrency(value)}
+                </text>
+            `;
+        }).join('');
 
-        const dots = points
-            .map(
-                point => `
-                    <circle
-                        cx="${point.x}"
-                        cy="${point.y}"
-                        r="4"
-                        fill="#2563EB"
-                    >
-                        <title>
-                            ${point.month}:
-                            ${formatIndianCurrency(
-                                point.revenue
-                            )}
-                        </title>
-                    </circle>
-                `
-            )
-            .join('');
+        const fewPoints = points.length <= 12;
+
+        const dots = points.map(p => `
+            <circle cx="${p.x}" cy="${p.y}" r="${fewPoints ? 5 : 3}" fill="#2563EB"
+                    stroke="#ffffff" stroke-width="2">
+                <title>${p.label}: ${formatIndianCurrency(p.revenue)}</title>
+            </circle>
+        `).join('');
+
+        const valueLabels = fewPoints
+            ? points.map(p => `
+                <text x="${p.x}" y="${p.y - 12}" text-anchor="middle"
+                      font-size="12" font-weight="600" fill="#1e293b">
+                    ${formatIndianCurrency(p.revenue)}
+                </text>
+            `).join('')
+            : '';
+
+        // At most ~8 x-axis labels so they never overlap
+        const labelStep = Math.max(1, Math.ceil(points.length / 8));
+
+        const xLabels = points.map((p, index) => {
+            const isLast = index === points.length - 1;
+            const show = index % labelStep === 0 &&
+                (isLast || points.length - 1 - index >= labelStep / 2);
+
+            return (show || isLast)
+                ? `<text x="${p.x}" y="${height - 12}" text-anchor="middle"
+                         font-size="12" fill="#64748b">${p.label}</text>`
+                : '';
+        }).join('');
+
+        const note = isDaily
+            ? `<div style="text-align:center; color:var(--muted); font-size:12px; margin-top:4px;">
+                   Showing daily revenue because this period has only one month of sales.
+               </div>`
+            : '';
 
         container.innerHTML = `
             <svg
                 viewBox="0 0 ${width} ${height}"
                 width="100%"
-                height="240"
-                preserveAspectRatio="none"
-                style="overflow: visible;"
+                style="display:block; max-height:240px;"
+                preserveAspectRatio="xMidYMid meet"
+                role="img"
+                aria-label="Revenue trend"
             >
-
-                <!-- Grid lines -->
-
-                <line
-                    x1="${padding}"
-                    y1="${padding}"
-                    x2="${width - padding}"
-                    y2="${padding}"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                />
-
-                <line
-                    x1="${padding}"
-                    y1="${height / 2}"
-                    x2="${width - padding}"
-                    y2="${height / 2}"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                />
-
-                <line
-                    x1="${padding}"
-                    y1="${height - padding}"
-                    x2="${width - padding}"
-                    y2="${height - padding}"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                />
-
-                <!-- Revenue area -->
-
-                <polygon
-                    points="${areaPoints}"
-                    fill="#2563EB"
-                    opacity="0.10"
-                />
-
-                <!-- Revenue line -->
-
-                <polyline
-                    points="${linePoints}"
-                    fill="none"
-                    stroke="#2563EB"
-                    stroke-width="4"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                />
-
-                <!-- Data points -->
-
+                ${gridLines}
+                ${points.length > 1 ? `
+                    <polygon points="${areaPoints}" fill="#2563EB" opacity="0.10" />
+                    <polyline
+                        points="${linePoints}"
+                        fill="none"
+                        stroke="#2563EB"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />` : ''}
                 ${dots}
-
-                <!-- Labels -->
-
-                ${labels}
-
+                ${valueLabels}
+                ${xLabels}
             </svg>
+            ${note}
         `;
 
-        console.log(
-            "Revenue trend loaded:",
-            salesData
-        );
+        console.log("Revenue trend loaded:", items);
 
     } catch (error) {
 
-        console.error(
-            "Error loading revenue trend:",
-            error
-        );
+        console.error("Error loading revenue trend:", error);
 
-        const container =
-            document.getElementById(
-                'revenue-trend-chart'
-            );
-
-        if (container) {
-            container.innerHTML = `
-                <div style="
-                    text-align:center;
-                    color:#dc2626;
-                    font-size:13px;
-                    padding-top:80px;
-                ">
-                    Unable to load revenue trend.
-                </div>
-            `;
-        }
+        container.innerHTML = `
+            <div style="text-align:center; color:#dc2626; font-size:13px;">
+                Unable to load revenue trend.
+            </div>
+        `;
     }
 }
 

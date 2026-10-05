@@ -12,3 +12,6 @@ node_modules/
 Thumbs.db
 
 .vscode/
+
+__pycache__/
+*.pyc
