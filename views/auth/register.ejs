@@ -40,7 +40,7 @@
   <div class="auth-right">
     <div class="auth-card">
       <div class="card-title">Create your account</div>
-      <div class="card-subtitle">New accounts start with the Manager role. The owner can change this in Settings.</div>
+      <div class="card-subtitle">New accounts start with the Manager role.</div>
 
       <%- include('../partials/flash') %>
 
@@ -61,7 +61,6 @@
           <label for="confirm_password">Confirm password</label>
           <input type="password" id="confirm_password" name="confirm_password" minlength="8" required />
         </div>
-        <input type="hidden" name="role" value="manager" />
 
         <button class="btn btn-primary" type="submit" style="width:100%; margin-top: 16px;">Create account</button>
       </form>
