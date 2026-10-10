@@ -649,6 +649,42 @@ td small {
 }
 
 /* ============================================================
+   TYPEAHEAD
+   ============================================================ */
+.typeahead {
+  position: relative;
+}
+.typeahead-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-md);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 9999;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+.typeahead-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.typeahead-item:last-child {
+  border-bottom: none;
+}
+.typeahead-item:hover, .typeahead-item.active {
+  background: var(--primary-light);
+}
+.typeahead-empty {
+  padding: 8px 12px;
+  color: var(--muted);
+}
+
+/* ============================================================
    FLASH MESSAGES
    ============================================================ */
 .flash {

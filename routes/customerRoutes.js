@@ -5,6 +5,7 @@ const asyncHandler = require("../middlewares/asyncHandler");
 const router = express.Router();
 router.use(isLoggedIn);
 router.get("/", asyncHandler(controller.index));
+router.get("/search", asyncHandler(controller.search));
 router.get("/:id", asyncHandler(controller.show));
 router.post("/", asyncHandler(controller.create));
 router.put("/:id", asyncHandler(controller.update));

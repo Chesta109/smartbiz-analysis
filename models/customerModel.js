@@ -11,6 +11,16 @@ async function findById(id) {
   const [rows] = await pool.query("SELECT * FROM customers WHERE id = ?", [id]);
   return rows[0] || null;
 }
+async function searchByPrefix(q, limit = 8) {
+  const escaped = q.replace(/[\\%_]/g, "\\$&");
+  const prefix = escaped + "%";
+  const wordPrefix = "% " + escaped + "%";
+  const [rows] = await pool.query(
+    "SELECT id, name, phone, email FROM customers WHERE name LIKE ? OR name LIKE ? ORDER BY name ASC LIMIT ?",
+    [prefix, wordPrefix, limit]
+  );
+  return rows;
+}
 async function create(data) {
   const [result] = await pool.query(
     "INSERT INTO customers (name, email, phone, address) VALUES (?, ?, ?, ?)",
@@ -49,4 +59,5 @@ module.exports = {
   update,
   remove,
   findPurchaseHistory,
+  searchByPrefix,
 };

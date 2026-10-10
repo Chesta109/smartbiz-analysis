@@ -26,4 +26,5 @@ module.exports = {
   updateCustomer,
   deleteCustomer,
   purchaseHistory: customerModel.findPurchaseHistory,
+  searchCustomers: (q) => customerModel.searchByPrefix(q),
 };

@@ -17,6 +17,14 @@ async function show(req, res) {
     history: await customerService.purchaseHistory(customer.id),
   });
 }
+async function search(req, res) {
+  const q = req.query.q || "";
+  if (q.length < 1 || q.length > 60) {
+    return res.json({ data: [] });
+  }
+  const results = await customerService.searchCustomers(q);
+  res.json({ data: results });
+}
 async function create(req, res) {
   const customer = await customerService.createCustomer(req.body);
   if (req.accepts("json")) return res.status(201).json(customer);
@@ -38,4 +46,4 @@ async function remove(req, res) {
   req.flash("success", "Customer deleted successfully.");
   res.redirect("/customers");
 }
-module.exports = { index, show, create, update, remove };
+module.exports = { index, show, create, update, remove, search };

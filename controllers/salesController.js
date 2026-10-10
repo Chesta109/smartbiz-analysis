@@ -6,9 +6,8 @@ const { renderView } = require("../utils/viewLocals");
 const { AppError } = require("../middlewares/errorHandler");
 
 async function index(req, res) {
-  const [products, customers, recentSales, todaySummary] = await Promise.all([
+  const [products, recentSales, todaySummary] = await Promise.all([
     productService.listProducts(),
-    customerService.listCustomers(),
     saleModel.findRecent(),
     saleModel.findTodaySummary(),
   ]);
@@ -16,7 +15,6 @@ async function index(req, res) {
     title: "Sales",
     activeNav: "/sales",
     products,
-    customers,
     recentSales,
     todaySummary,
   });
@@ -28,6 +26,10 @@ async function create(req, res) {
 
   if (!userId) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+  if (customerId) {
+    const customer = await customerService.getCustomer(customerId);
+    if (!customer) throw new AppError("Invalid customer.", 422, "VALIDATION_ERROR");
   }
   if (
     !Array.isArray(items) ||
