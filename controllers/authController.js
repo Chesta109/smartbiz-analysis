@@ -31,7 +31,10 @@ async function register(req, res) {
 }
 
 function logout(req, res) {
-  req.session.destroy(() => res.redirect("/login"));
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid");
+    res.redirect("/login");
+  });
 }
 
 module.exports = { login, register, logout };
