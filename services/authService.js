@@ -21,6 +21,9 @@ async function login(email, password) {
 }
 
 async function register(name, email, password, role) {
+  if (!name || name.trim() === "") throw new AppError("Name is required.", 422, "VALIDATION_ERROR");
+  if (!email || email.trim() === "") throw new AppError("Email is required.", 422, "VALIDATION_ERROR");
+  if (!password || password.length < 8) throw new AppError("Password must be at least 8 characters.", 422, "VALIDATION_ERROR");
   const existing = await userModel.findByEmail(email);
   if (existing) {
     throw new AppError("Email already in use.", 409, "VALIDATION_ERROR");
@@ -30,7 +33,7 @@ async function register(name, email, password, role) {
     name,
     email,
     password: hashedPassword,
-    role,
+    role: "manager",
   });
   return sanitizeUser(user);
 }

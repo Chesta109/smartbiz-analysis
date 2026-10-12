@@ -99,24 +99,19 @@ function getCategoryFilter(category) {
     };
 }
 
-function getCombinedFilters(period, category) {
-
-    const dateFilter =
-        getDateFilter(period);
-
-    const categoryFilter =
-        getCategoryFilter(category);
-
-    return {
-        condition: `
-            ${dateFilter.condition}
-            AND ${categoryFilter.condition}
-        `,
-        params: [
-            ...dateFilter.params,
-            ...categoryFilter.params
-        ]
-    };
+function getCombinedFilters(period, category, businessId) {
+    const dateFilter = getDateFilter(period);
+    const categoryFilter = getCategoryFilter(category);
+    let condition = `
+        ${dateFilter.condition}
+        AND ${categoryFilter.condition}
+    `;
+    let params = [...dateFilter.params, ...categoryFilter.params];
+    if (businessId) {
+        condition += " AND s.business_id = ?";
+        params.push(businessId);
+    }
+    return { condition, params };
 }
 
 /* =========================================================
@@ -125,16 +120,10 @@ function getCombinedFilters(period, category) {
    WHERE status = 'completed'
    ========================================================= */
 
-async function getSummary(
-    period = "30",
-    category = "all"
-) {
+async function getSummary(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const categoryJoin =
         category !== "all"
@@ -191,16 +180,10 @@ async function getSummary(
    Date filter is applied, but status is NOT restricted.
    ========================================================= */
 
-async function getOrderStatus(
-    period = "30",
-    category = "all"
-) {
+async function getOrderStatus(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const categoryJoin =
         category !== "all"
@@ -249,16 +232,10 @@ async function getOrderStatus(
    WHERE status = 'completed'
    ========================================================= */
 
-async function getMonthlySales(
-    period = "30",
-    category = "all"
-) {
+async function getMonthlySales(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const categoryJoin =
         category !== "all"
@@ -325,16 +302,10 @@ async function getMonthlySales(
    only contains one month of data (a monthly line needs 2+).
    ========================================================= */
 
-async function getDailySales(
-    period = "30",
-    category = "all"
-) {
+async function getDailySales(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const categoryJoin =
         category !== "all"
@@ -390,16 +361,10 @@ async function getDailySales(
    Original logic preserved.
    ========================================================= */
 
-async function getProductPerformance(
-    period = "30",
-    category = "all"
-) {
+async function getProductPerformance(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const [rows] = await pool.query(
         `
@@ -458,16 +423,10 @@ async function getProductPerformance(
    Original logic preserved.
    ========================================================= */
 
-async function getCategoryPerformance(
-    period = "30",
-    category = "all"
-) {
+async function getCategoryPerformance(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const [rows] = await pool.query(
         `
@@ -529,16 +488,10 @@ async function getCategoryPerformance(
    Original logic preserved.
    ========================================================= */
 
-async function getCustomerPerformance(
-    period = "30",
-    category = "all"
-) {
+async function getCustomerPerformance(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const categoryJoin =
         category !== "all"
@@ -604,8 +557,7 @@ async function getCustomerPerformance(
    This exactly follows the original view logic.
    ========================================================= */
 
-async function getInventoryAlerts() {
-
+async function getInventoryAlerts(category = "all", businessId) {
     const [rows] = await pool.query(`
         SELECT
             p.id AS product_id,
@@ -627,8 +579,9 @@ async function getInventoryAlerts() {
 
         FROM products p
 
+        WHERE p.business_id = ?
         ORDER BY p.stock_qty ASC
-    `);
+    `, [businessId]);
 
     return rows;
 }
@@ -640,16 +593,10 @@ async function getInventoryAlerts() {
    completed sales only.
    ========================================================= */
 
-async function getPaymentAnalysis(
-    period = "30",
-    category = "all"
-) {
+async function getPaymentAnalysis(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const categoryJoin =
         category !== "all"
@@ -698,16 +645,10 @@ async function getPaymentAnalysis(
    Original calculation preserved exactly.
    ========================================================= */
 
-async function getProfitSummary(
-    period = "30",
-    category = "all"
-) {
+async function getProfitSummary(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const [rows] = await pool.query(
         `
@@ -784,16 +725,10 @@ async function getProfitSummary(
 
 
         
-       async function getProductInsights(
-    period = "30",
-    category = "all"
-) {
+       async function getProductInsights(period = "30", category = "all", businessId) {
 
     const { condition, params } =
-        getCombinedFilters(
-            period,
-            category
-        );
+        getCombinedFilters(period, category, businessId);
 
     const [rows] = await pool.query(
         `
@@ -856,6 +791,7 @@ async function getProfitSummary(
                 ? = 'all'
                 OR p.category = ?
             )
+            AND p.business_id = ?
 
         GROUP BY
             p.id,
@@ -866,26 +802,22 @@ async function getProfitSummary(
 
         ORDER BY revenue DESC
         `,
-        [
-            ...params,
-            category,
-            category
-        ]
+        [ ...params, category, category, businessId ]
     );
 
     return rows;
 }
 
-async function getCategories() {
+async function getCategories(businessId) {
 
     const [rows] = await pool.query(`
         SELECT DISTINCT
             category
         FROM products
-        WHERE category IS NOT NULL
+        WHERE category IS NOT NULL AND business_id = ?
           AND TRIM(category) <> ''
         ORDER BY category
-    `);
+    `, [businessId]);
 
     return rows.map(
         row => row.category

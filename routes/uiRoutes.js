@@ -14,6 +14,9 @@ router.get("/reports", isLoggedIn, (req, res) =>
     activeNav: "/reports",
   }),
 );
+const salesReportController = require("../controllers/salesReportController");
+router.get("/reports/sales.csv", isLoggedIn, salesReportController.downloadCsv);
+router.get("/reports/sales.pdf", isLoggedIn, salesReportController.downloadPdf);
 router.get("/login", (req, res) =>
   renderView(req, res, "auth/login", { title: "Sign in" }),
 );

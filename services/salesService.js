@@ -4,33 +4,21 @@ const productModel = require("../models/productModel");
 const orderItemModel = require("../models/orderItemModel");
 const { AppError } = require("../middlewares/errorHandler");
 
-async function createSale(customerId, userId, items) {
+async function createSale(businessId, customerId, userId, items) {
   if (!items || items.length === 0) {
-    throw new AppError(
-      "Sale must have at least one item.",
-      422,
-      "VALIDATION_ERROR",
-    );
+    throw new AppError("Sale must have at least one item.", 422, "VALIDATION_ERROR");
   }
 
   let totalAmount = 0;
   const enrichedItems = [];
 
   for (const item of items) {
-    const product = await productModel.findById(item.productId);
+    const product = await productModel.findById(item.productId, businessId);
     if (!product) {
-      throw new AppError(
-        `Product ID ${item.productId} not found.`,
-        404,
-        "NOT_FOUND",
-      );
+      throw new AppError(`Product ID ${item.productId} not found.`, 404, "NOT_FOUND");
     }
     if (product.stock_qty < item.quantity) {
-      throw new AppError(
-        `Not enough stock for ${product.name}.`,
-        400,
-        "BAD_REQUEST",
-      );
+      throw new AppError(`Not enough stock for ${product.name}.`, 400, "BAD_REQUEST");
     }
     const unitPrice = product.price;
     totalAmount += unitPrice * item.quantity;
@@ -46,6 +34,7 @@ async function createSale(customerId, userId, items) {
 
   try {
     const saleId = await saleModel.create(connection, {
+      businessId,
       customerId: customerId || null,
       userId,
       totalAmount,

@@ -24,6 +24,7 @@ Node.js runs this script and reads the JSON printed to stdout.
 import json
 import os
 import sys
+import argparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -233,14 +234,19 @@ def not_enough_data(found_days):
     }
 
 
-def forecast_sales():
+def forecast_sales(business_id):
     from utils.load_sales import load_daily_sales
-    return forecast_from_daily(load_daily_sales())
+    return forecast_from_daily(load_daily_sales(business_id))
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--business-id", type=int, required=True)
+    args = parser.parse_args()
+    if args.business_id < 1:
+        parser.error("--business-id must be a positive integer")
     try:
-        print(json.dumps(forecast_sales()))
+        print(json.dumps(forecast_sales(args.business_id)))
     except ImportError as exc:
         print(json.dumps({
             "error": f"A Python package is missing ({exc.name}). "
@@ -248,7 +254,8 @@ if __name__ == "__main__":
             "history": [], "forecast": [],
         }))
     except Exception as exc:  # DB down, bad credentials, etc.
+        print(f"Forecast failed: {type(exc).__name__}", file=sys.stderr)
         print(json.dumps({
-            "error": f"Forecast could not be generated: {exc}",
+            "error": "Forecast could not be generated. Please try again later.",
             "history": [], "forecast": [],
         }))

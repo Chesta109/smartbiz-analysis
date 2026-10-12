@@ -12,6 +12,7 @@ const productRoutes = require('./routes/productRoutes');
 const uiRoutes = require('./routes/uiRoutes');
 const authRoutes = require('./routes/authRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const { isLoggedIn } = require('./middlewares/authMiddleware');
 const salesRoutes = require('./routes/salesRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 // dashboardRoutes, authRoutes, customerRoutes, analyticsRoutes,
@@ -58,7 +59,7 @@ app.use(uiRoutes);
 
 app.get('/', (req, res) => res.redirect('/dashboard'));
 
-app.use('/api/analytics', analyticsRoutes);
+app.use('/api/analytics', isLoggedIn, analyticsRoutes);
 
 // 404 fallthrough must be after all routes, before errorHandler
 app.use((req, res, next) => {

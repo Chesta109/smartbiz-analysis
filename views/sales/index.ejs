@@ -14,14 +14,14 @@
     </div>
     
     <div style="padding: 24px;">
-      <div class="field">
+      <div class="field typeahead">
         <label>Customer</label>
-        <select id="customerSelect" class="form-select">
-          <option value="">Walk-in Customer</option>
-          <% customers.forEach(function(c) { %>
-            <option value="<%= c.id %>"><%= c.name %></option>
-          <% }); %>
-        </select>
+        <div style="position: relative;">
+          <input type="text" id="customerTypeahead" class="form-control" placeholder="Walk-in Customer" autocomplete="off" />
+          <button type="button" id="clearCustomerBtn" style="display:none; position:absolute; right:10px; top:10px; background:none; border:none; cursor:pointer; color:var(--muted); font-size:16px; padding:0; line-height:1;">&times;</button>
+        </div>
+        <input type="hidden" id="customerSelect" value="" />
+        <div id="typeaheadList" class="typeahead-list" style="display:none;"></div>
       </div>
 
       <div class="sale-add">
@@ -212,6 +212,121 @@
     el.textContent = msg;
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  const customerTypeahead = document.getElementById('customerTypeahead');
+  const typeaheadList = document.getElementById('typeaheadList');
+  const customerSelect = document.getElementById('customerSelect');
+  const clearCustomerBtn = document.getElementById('clearCustomerBtn');
+  let typeaheadTimeout;
+  let typeaheadSelectedIndex = -1;
+  let typeaheadResults = [];
+
+  customerTypeahead.addEventListener('input', (e) => {
+    clearTimeout(typeaheadTimeout);
+    const q = e.target.value;
+    if (q.length < 1) {
+      typeaheadList.style.display = 'none';
+      return;
+    }
+    typeaheadTimeout = setTimeout(async () => {
+      try {
+        const res = await fetch('/customers/search?q=' + encodeURIComponent(q));
+        const json = await res.json();
+        typeaheadResults = json.data;
+        renderTypeahead();
+      } catch(err) {}
+    }, 200);
+  });
+
+  customerTypeahead.addEventListener('blur', () => {
+    setTimeout(() => {
+      typeaheadList.style.display = 'none';
+      if (!customerSelect.value) {
+        customerTypeahead.value = '';
+        clearCustomerBtn.style.display = 'none';
+      }
+    }, 150);
+  });
+
+  function renderTypeahead() {
+    typeaheadList.innerHTML = '';
+    typeaheadSelectedIndex = -1;
+    if (typeaheadResults.length === 0) {
+      const div = document.createElement('div');
+      div.className = 'typeahead-empty';
+      div.textContent = 'No matching customers';
+      typeaheadList.appendChild(div);
+    } else {
+      typeaheadResults.forEach((c, idx) => {
+        const div = document.createElement('div');
+        div.className = 'typeahead-item';
+        div.dataset.index = idx;
+        const main = document.createElement('div');
+        main.textContent = c.name;
+        main.style.fontWeight = '500';
+        div.appendChild(main);
+        
+        if (c.phone || c.email) {
+          const sub = document.createElement('div');
+          sub.textContent = c.phone || c.email;
+          sub.style.fontSize = '12px';
+          sub.style.color = 'var(--muted)';
+          div.appendChild(sub);
+        }
+        
+        div.addEventListener('mousedown', () => selectTypeaheadItem(idx));
+        typeaheadList.appendChild(div);
+      });
+    }
+    typeaheadList.style.display = 'block';
+  }
+
+  function selectTypeaheadItem(idx) {
+    const c = typeaheadResults[idx];
+    customerSelect.value = c.id;
+    customerTypeahead.value = c.name;
+    clearCustomerBtn.style.display = 'block';
+    typeaheadList.style.display = 'none';
+  }
+
+  clearCustomerBtn.addEventListener('click', () => {
+    customerSelect.value = '';
+    customerTypeahead.value = '';
+    clearCustomerBtn.style.display = 'none';
+    customerTypeahead.focus();
+  });
+
+  customerTypeahead.addEventListener('keydown', (e) => {
+    if (typeaheadList.style.display === 'none') return;
+    const items = typeaheadList.querySelectorAll('.typeahead-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      typeaheadSelectedIndex = Math.min(items.length - 1, typeaheadSelectedIndex + 1);
+      updateTypeaheadSelection(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      typeaheadSelectedIndex = Math.max(0, typeaheadSelectedIndex - 1);
+      updateTypeaheadSelection(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (typeaheadSelectedIndex >= 0 && typeaheadSelectedIndex < typeaheadResults.length) {
+        selectTypeaheadItem(typeaheadSelectedIndex);
+      }
+    } else if (e.key === 'Escape') {
+      typeaheadList.style.display = 'none';
+    }
+  });
+
+  function updateTypeaheadSelection(items) {
+    items.forEach((item, idx) => {
+      if (idx === typeaheadSelectedIndex) {
+        item.classList.add('active');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('active');
+      }
+    });
   }
 
   async function completeSale() {

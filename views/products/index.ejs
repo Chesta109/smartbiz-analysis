@@ -64,9 +64,11 @@
             <td><%= p.stock_qty %></td>
             <td><%= p.reorder_level %></td>
             <td><span class="<%= statusClass %> status-dot"><%= statusLabel %></span></td>
-            <td style="padding-right: 24px;">
-              <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary);"
+            <td style="padding-right: 24px; white-space: nowrap;">
+              <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary); margin-right: 10px;"
                  onclick='openProductModal(<%- JSON.stringify(p) %>); return false;'>Edit</a>
+              <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary);"
+                 onclick='openRestockModal(<%= p.id %>, <%- JSON.stringify(p.name) %>, <%= p.stock_qty %>, <%= p.reorder_level %>); return false;'>Restock</a>
             </td>
           </tr>
         <% }); %>
@@ -168,4 +170,5 @@
   }
 </script>
 <script src="/js/products.js"></script>
+<%- include('../partials/restockModal') %>
 <%- include('../partials/appEnd') %>

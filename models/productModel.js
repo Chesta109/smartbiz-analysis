@@ -1,8 +1,8 @@
 const pool = require("../config/db");
 
-async function findAll({ search, category, stockLevel } = {}) {
-  const where = [];
-  const params = {};
+async function findAll({ search, category, stockLevel, businessId } = {}) {
+  const where = ["business_id = :businessId"];
+  const params = { businessId };
   if (search) {
     where.push("(name LIKE :q OR sku LIKE :q)");
     params.q = `%${search}%`;
@@ -16,31 +16,32 @@ async function findAll({ search, category, stockLevel } = {}) {
   if (stockLevel === "out") where.push("stock_qty = 0");
   if (stockLevel === "in") where.push("stock_qty > reorder_level");
   const [rows] = await pool.query(
-    `SELECT * FROM products${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY name ASC`,
+    `SELECT * FROM products WHERE ${where.join(" AND ")} ORDER BY name ASC`,
     params,
   );
   return rows;
 }
 
-async function findById(id) {
-  const [rows] = await pool.query("SELECT * FROM products WHERE id = :id", {
-    id,
+async function findById(id, businessId) {
+  const [rows] = await pool.query("SELECT * FROM products WHERE id = :id AND business_id = :businessId", {
+    id, businessId
   });
   return rows[0] || null;
 }
 
-async function findBySku(sku) {
-  const [rows] = await pool.query("SELECT * FROM products WHERE sku = :sku", {
-    sku,
+async function findBySku(sku, businessId) {
+  const [rows] = await pool.query("SELECT * FROM products WHERE sku = :sku AND business_id = :businessId", {
+    sku, businessId
   });
   return rows[0] || null;
 }
 
 async function create(data) {
   const [result] = await pool.query(
-    `INSERT INTO products (name, sku, category, price, cost, stock_qty, reorder_level)
-     VALUES (:name, :sku, :category, :price, :cost, :stock_qty, :reorder_level)`,
+    `INSERT INTO products (business_id, name, sku, category, price, cost, stock_qty, reorder_level)
+     VALUES (:business_id, :name, :sku, :category, :price, :cost, :stock_qty, :reorder_level)`,
     {
+      business_id: data.businessId,
       name: data.name,
       sku: data.sku,
       category: data.category || null,
@@ -50,10 +51,10 @@ async function create(data) {
       reorder_level: data.reorder_level ?? 5,
     },
   );
-  return findById(result.insertId);
+  return findById(result.insertId, data.businessId);
 }
 
-async function update(id, data) {
+async function update(id, data, businessId) {
   const fields = [
     "name",
     "sku",
@@ -64,7 +65,7 @@ async function update(id, data) {
     "reorder_level",
   ];
   const setClauses = [];
-  const params = { id };
+  const params = { id, businessId };
 
   for (const field of fields) {
     if (data[field] !== undefined) {
@@ -72,29 +73,36 @@ async function update(id, data) {
       params[field] = data[field];
     }
   }
-  if (setClauses.length === 0) return findById(id);
+  if (setClauses.length === 0) return findById(id, businessId);
 
   await pool.query(
-    `UPDATE products SET ${setClauses.join(", ")} WHERE id = :id`,
+    `UPDATE products SET ${setClauses.join(", ")} WHERE id = :id AND business_id = :businessId`,
     params,
   );
-  return findById(id);
+  return findById(id, businessId);
 }
 
-async function remove(id) {
-  const [result] = await pool.query("DELETE FROM products WHERE id = :id", {
-    id,
+async function remove(id, businessId) {
+  const [result] = await pool.query("DELETE FROM products WHERE id = :id AND business_id = :businessId", {
+    id, businessId
   });
   return result.affectedRows > 0;
 }
 
-// Used inside services/salesService.js's transaction (not this module) via a
-// passed connection, so the multi-table sale stays atomic.
 async function adjustStockWithConnection(conn, productId, delta) {
   await conn.query(
     "UPDATE products SET stock_qty = stock_qty + :delta WHERE id = :id",
     { delta, id: productId },
   );
+}
+
+async function restock(id, quantity, businessId) {
+  const [result] = await pool.query(
+    "UPDATE products SET stock_qty = stock_qty + :quantity WHERE id = :id AND business_id = :businessId",
+    { quantity, id, businessId },
+  );
+  if (result.affectedRows === 0) return null;
+  return findById(id, businessId);
 }
 
 module.exports = {
@@ -105,4 +113,5 @@ module.exports = {
   update,
   remove,
   adjustStockWithConnection,
+  restock,
 };

@@ -5,18 +5,17 @@ Creates data for the existing schema:
 users, customers, products, sales, order_items
 
 Usage:
-  1) Install dependencies:
-       pip install mysql-connector-python bcrypt
+1) Install dependencies:pip install mysql-connector-python bcrypt
 
-  2) Set database environment variables (or edit the defaults below):
-       DB_HOST=localhost
-       DB_PORT=3306
-       DB_USER=root
-       DB_PASSWORD= your_mysql_password
-       DB_NAME=smartbiz_insight
+2) Set database environment variables (or edit the defaults below):
+B_HOST=localhost
+    DB_PORT=3306
+    DB_USER=root
+    DB_PASSWORD= your_mysql_password
+    DB_NAME=smartbiz_insight
 
-  3) Run:
-       python generate_business_data.py
+3) Run:
+    python generate_business_data.py
 
 The script is intentionally idempotent for demo development:
 it clears the five business tables first, then inserts a fresh dataset.
@@ -28,8 +27,11 @@ import random
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
+from dotenv import load_dotenv
 import bcrypt
 import mysql.connector
+
+load_dotenv()
 
 random.seed(42)
 
@@ -133,7 +135,7 @@ def insert_users(cur):
         rows.append((name, f"employee{i}@smartbiz.demo", make_password_hash(), role))
     cur.executemany(
         """INSERT INTO users (name, email, password_hash, role)
-           VALUES (%s, %s, %s, %s)""",
+        VALUES (%s, %s, %s, %s)""",
         rows
     )
 
@@ -149,7 +151,7 @@ def insert_customers(cur):
         ))
     cur.executemany(
         """INSERT INTO customers (name, email, phone, address)
-           VALUES (%s, %s, %s, %s)""",
+        VALUES (%s, %s, %s, %s)""",
         rows
     )
 
@@ -179,8 +181,8 @@ def insert_products(cur):
 
     cur.executemany(
         """INSERT INTO products
-           (name, sku, category, price, cost, stock_qty, reorder_level)
-           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+        (name, sku, category, price, cost, stock_qty, reorder_level)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
         rows
     )
 
@@ -240,8 +242,8 @@ def insert_sales_and_items(cur):
         # Insert sale first so we get its auto-increment ID.
         cur.execute(
             """INSERT INTO sales
-               (customer_id, user_id, total_amount, payment_method, status, created_at)
-               VALUES (%s, %s, %s, %s, %s, %s)""",
+            (customer_id, user_id, total_amount, payment_method, status, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)""",
             (customer_id, user_id, Decimal("0.00"), payment_method, status, created)
         )
         sale_id = cur.lastrowid
@@ -270,8 +272,8 @@ def insert_sales_and_items(cur):
 
     cur.executemany(
         """INSERT INTO order_items
-           (sale_id, product_id, quantity, unit_price, subtotal)
-           VALUES (%s, %s, %s, %s, %s)""",
+        (sale_id, product_id, quantity, unit_price, subtotal)
+        VALUES (%s, %s, %s, %s, %s)""",
         item_rows
     )
 

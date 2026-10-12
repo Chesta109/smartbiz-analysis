@@ -34,6 +34,14 @@ router.put(
   asyncHandler(productController.update),
 );
 
+router.post(
+  "/:id/restock",
+  requireRole("owner", "manager"),
+  productValidation.restock,
+  validateRequest,
+  asyncHandler(productController.restock),
+);
+
 router.delete(
   "/:id",
   requireRole("owner"),

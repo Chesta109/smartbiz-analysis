@@ -4,10 +4,13 @@ async function login(req, res) {
   const { email, password } = req.body;
   try {
     const user = await authService.login(email, password);
-    req.session.user = user;
-    req.session.save((err) => {
-      if (err) console.error("Session save error:", err);
-      res.redirect("/dashboard");
+    req.session.regenerate((err) => {
+      if (err) console.error("Session regenerate error:", err);
+      req.session.user = user;
+      req.session.save((err) => {
+        if (err) console.error("Session save error:", err);
+        res.redirect("/dashboard");
+      });
     });
   } catch (err) {
     req.flash("error", err.message || "Invalid credentials.");
@@ -19,10 +22,13 @@ async function register(req, res) {
   const { name, email, password, role } = req.body;
   try {
     const user = await authService.register(name, email, password, role);
-    req.session.user = user;
-    req.session.save((err) => {
-      if (err) console.error("Session save error:", err);
-      res.redirect("/dashboard");
+    req.session.regenerate((err) => {
+      if (err) console.error("Session regenerate error:", err);
+      req.session.user = user;
+      req.session.save((err) => {
+        if (err) console.error("Session save error:", err);
+        res.redirect("/dashboard");
+      });
     });
   } catch (err) {
     req.flash("error", err.message || "Registration failed.");
@@ -31,7 +37,10 @@ async function register(req, res) {
 }
 
 function logout(req, res) {
-  req.session.destroy(() => res.redirect("/login"));
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid");
+    res.redirect("/login");
+  });
 }
 
 module.exports = { login, register, logout };

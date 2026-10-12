@@ -20,6 +20,16 @@ function formatIndianCurrency(value) {
     return `₹${value.toFixed(0)}`;
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 
 /* =========================================================
    DASHBOARD FILTERS
@@ -583,15 +593,20 @@ async function loadInventoryAlerts() {
             return;
         }
 
-        if (inventory.length === 0) {
+        const alerts = inventory.filter(product => {
+            const stock = Number(product.stock_qty || 0);
+            const reorderLevel = Number(product.reorder_level || 0);
+            return stock <= reorderLevel;
+        });
+
+        if (alerts.length === 0) {
 
             container.innerHTML = `
                 <div class="empty-state"
-                     style="padding:24px 0;">
+                     style="padding:24px 0; text-align: center; color: var(--muted);">
 
                     <span style="font-size:14px;">
-                        All products are above
-                        their reorder level.
+                        All products are above their reorder level.
                     </span>
 
                 </div>
@@ -601,7 +616,7 @@ async function loadInventoryAlerts() {
         }
 
         container.innerHTML =
-            inventory
+            alerts
                 .slice(0, 5)
                 .map((product, index) => {
 
@@ -634,7 +649,7 @@ async function loadInventoryAlerts() {
                             border-bottom:${
                                 index <
                                 Math.min(
-                                    inventory.length,
+                                    alerts.length,
                                     5
                                 ) - 1
                                     ? '1px solid var(--line)'
@@ -649,7 +664,7 @@ async function loadInventoryAlerts() {
                                     font-size:14px;
                                     color:var(--ink);
                                 ">
-                                    ${product.product_name}
+                                    ${escapeHtml(product.product_name)}
                                 </div>
 
                                 <div style="
@@ -676,7 +691,12 @@ async function loadInventoryAlerts() {
                                 </span>
 
                                 <button
-                                    class="btn btn-outline btn-sm"
+                                    type="button"
+                                    class="btn btn-outline btn-sm restock-btn"
+                                    data-product-id="${product.product_id}"
+                                    data-product-name="${escapeHtml(product.product_name)}"
+                                    data-stock="${stock}"
+                                    data-reorder="${reorderLevel}"
                                 >
                                     Restock
                                 </button>
@@ -689,9 +709,26 @@ async function loadInventoryAlerts() {
                 })
                 .join('');
 
+        if (!container.dataset.hasRestockListener) {
+            container.dataset.hasRestockListener = 'true';
+            container.addEventListener('click', (e) => {
+                const btn = e.target.closest('.restock-btn');
+                if (btn) {
+                    e.preventDefault();
+                    const id = btn.dataset.productId;
+                    const name = btn.dataset.productName;
+                    const stock = Number(btn.dataset.stock);
+                    const reorder = Number(btn.dataset.reorder);
+                    if (typeof openRestockModal === 'function') {
+                        openRestockModal(id, name, stock, reorder);
+                    }
+                }
+            });
+        }
+
         console.log(
             "Inventory alerts loaded:",
-            inventory
+            alerts
         );
 
     } catch (error) {
@@ -922,18 +959,47 @@ async function loadBusinessRecommendations() {
 
                                 </div>
 
-                                <span
-                                    class="${badgeClass}"
-                                    style="white-space:nowrap;"
-                                >
-                                    ${statusText}
-                                </span>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span
+                                        class="${badgeClass}"
+                                        style="white-space:nowrap;"
+                                    >
+                                        ${statusText}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline btn-sm restock-btn"
+                                        data-product-id="${item.product_id}"
+                                        data-product-name="${escapeHtml(item.product_name)}"
+                                        data-stock="${item.stock_qty}"
+                                        data-reorder="${item.reorder_level}"
+                                    >
+                                        Restock
+                                    </button>
+                                </div>
 
                             </div>
                         `;
                     }
                 )
                 .join('');
+
+        if (!container.dataset.hasRestockListener) {
+            container.dataset.hasRestockListener = 'true';
+            container.addEventListener('click', (e) => {
+                const btn = e.target.closest('.restock-btn');
+                if (btn) {
+                    e.preventDefault();
+                    const id = btn.dataset.productId;
+                    const name = btn.dataset.productName;
+                    const stock = Number(btn.dataset.stock);
+                    const reorder = Number(btn.dataset.reorder);
+                    if (typeof openRestockModal === 'function') {
+                        openRestockModal(id, name, stock, reorder);
+                    }
+                }
+            });
+        }
 
         console.log(
             "Business recommendations loaded:",

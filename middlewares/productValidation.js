@@ -36,4 +36,13 @@ const update = [
 
 const idParam = [param("id").isInt().withMessage("Invalid product id")];
 
-module.exports = { create, update, idParam };
+const restock = [
+  param("id").isInt().withMessage("Invalid product id"),
+  body("quantity")
+    .notEmpty()
+    .withMessage("Quantity is required")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be a positive integer"),
+];
+
+module.exports = { create, update, idParam, restock };

@@ -6,14 +6,15 @@ const analyticsService = require("../services/analyticsService");
 
 
 async function index(req, res) {
+  const businessId = req.session.user.business_id;
   const [
     summary,
     profitSummary,
     [lowStockItems],
   ] = await Promise.all([
-    analyticsService.getSummary(),
+    analyticsService.getSummary("30", "all", businessId),
 
-    analyticsService.getProfitSummary(),
+    analyticsService.getProfitSummary("30", "all", businessId),
 
     pool.query(
       `
@@ -22,10 +23,10 @@ async function index(req, res) {
         stock_qty,
         reorder_level
       FROM products
-      WHERE stock_qty <= reorder_level
+      WHERE stock_qty <= reorder_level AND business_id = ?
       ORDER BY stock_qty ASC
       LIMIT 5
-      `
+      `, [businessId]
     ),
   ]);
 
@@ -38,7 +39,7 @@ async function index(req, res) {
   let forecastChart = null;
 
   try {
-    forecastResult = await runForecast();
+    forecastResult = await runForecast(businessId);
     console.log("FORECAST DEBUG:", JSON.stringify(forecastResult).slice(0, 300));
 
     console.log(
