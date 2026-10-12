@@ -6,10 +6,11 @@ const { renderView } = require("../utils/viewLocals");
 const { AppError } = require("../middlewares/errorHandler");
 
 async function index(req, res) {
+  const businessId = req.session.user.business_id;
   const [products, recentSales, todaySummary] = await Promise.all([
-    productService.listProducts(),
-    saleModel.findRecent(),
-    saleModel.findTodaySummary(),
+    productService.listProducts(businessId),
+    saleModel.findRecent(businessId),
+    saleModel.findTodaySummary(businessId),
   ]);
   renderView(req, res, "sales/index", {
     title: "Sales",
@@ -23,12 +24,13 @@ async function index(req, res) {
 async function create(req, res) {
   const { customerId, items } = req.body;
   const userId = req.session?.user?.id;
+  const businessId = req.session?.user?.business_id;
 
-  if (!userId) {
+  if (!userId || !businessId) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
   if (customerId) {
-    const customer = await customerService.getCustomer(customerId);
+    const customer = await customerService.getCustomer(customerId, businessId);
     if (!customer) throw new AppError("Invalid customer.", 422, "VALIDATION_ERROR");
   }
   if (
@@ -49,6 +51,7 @@ async function create(req, res) {
   }
 
   await salesService.createSale(
+    businessId,
     customerId,
     userId,
     items.map((item) => ({

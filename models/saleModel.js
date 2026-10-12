@@ -1,17 +1,15 @@
-// models/saleModel.js
 const pool = require("../config/db");
 
-// Inside the sale transaction — takes a connection, not the pool.
-async function create(connection, { customerId, userId, totalAmount }) {
+async function create(connection, { businessId, customerId, userId, totalAmount }) {
   const [result] = await connection.query(
-    `INSERT INTO sales (customer_id, user_id, total_amount, status)
-     VALUES (?, ?, ?, 'completed')`,
-    [customerId || null, userId, totalAmount],
+    `INSERT INTO sales (business_id, customer_id, user_id, total_amount, status)
+     VALUES (?, ?, ?, ?, 'completed')`,
+    [businessId, customerId || null, userId, totalAmount],
   );
   return result.insertId;
 }
 
-async function findRecent(limit = 20) {
+async function findRecent(businessId, limit = 20) {
   const [rows] = await pool.query(
     `SELECT s.id, s.created_at AS sale_date, s.total_amount, s.status,
             COALESCE(c.name, 'Walk-in Customer') AS customer_name,
@@ -20,21 +18,22 @@ async function findRecent(limit = 20) {
      FROM sales s
      LEFT JOIN customers c ON c.id = s.customer_id
      JOIN users u ON u.id = s.user_id
+     WHERE s.business_id = ?
      ORDER BY s.created_at DESC
      LIMIT ?`,
-    [limit],
+    [businessId, limit],
   );
   return rows;
 }
 
-async function findByIdWithItems(id) {
+async function findByIdWithItems(id, businessId) {
   const [saleRows] = await pool.query(
     `SELECT s.*, COALESCE(c.name, 'Walk-in Customer') AS customer_name, u.name AS staff_name
      FROM sales s
      LEFT JOIN customers c ON c.id = s.customer_id
      JOIN users u ON u.id = s.user_id
-     WHERE s.id = ?`,
-    [id],
+     WHERE s.id = ? AND s.business_id = ?`,
+    [id, businessId],
   );
   const sale = saleRows[0];
   if (!sale) return null;
@@ -49,9 +48,7 @@ async function findByIdWithItems(id) {
   return { ...sale, items };
 }
 
-// Today-at-a-glance stats (Section 10 of the doc / matches the UI video's
-// "Sales today / Revenue today / Items sold / Avg. sale value" panel).
-async function findTodaySummary() {
+async function findTodaySummary(businessId) {
   const [rows] = await pool.query(
     `SELECT
        COUNT(*) AS sales_today,
@@ -59,14 +56,24 @@ async function findTodaySummary() {
        COALESCE((
          SELECT SUM(oi.quantity) FROM order_items oi
          JOIN sales s2 ON s2.id = oi.sale_id
-       WHERE DATE(s2.created_at) = CURDATE()
+       WHERE DATE(s2.created_at) = CURDATE() AND s2.business_id = ?
        ), 0) AS items_sold
      FROM sales
-     WHERE DATE(created_at) = CURDATE()`,
+     WHERE DATE(created_at) = CURDATE() AND business_id = ?`,
+    [businessId, businessId]
   );
   const row = rows[0];
   const avg = row.sales_today > 0 ? row.revenue_today / row.sales_today : 0;
   return { ...row, avg_sale_value: avg };
 }
 
-module.exports = { create, findRecent, findByIdWithItems, findTodaySummary };
+async function getActivityKey(businessId) {
+  const [rows] = await pool.query(
+    "SELECT COUNT(*) AS c, MAX(created_at) AS m FROM sales WHERE business_id = ? AND status = 'completed'",
+    [businessId]
+  );
+  const m = rows[0].m;
+  return `${rows[0].c}:${m ? new Date(m).getTime() : 0}`;
+}
+
+module.exports = { create, findRecent, findByIdWithItems, findTodaySummary, getActivityKey };

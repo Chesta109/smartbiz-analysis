@@ -18,11 +18,11 @@ function getFilters(req) {
 async function getSummary(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getSummary(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -40,11 +40,11 @@ async function getSummary(req, res, next) {
 async function getOrderStatus(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getOrderStatus(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -62,11 +62,11 @@ async function getOrderStatus(req, res, next) {
 async function getMonthlySales(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getMonthlySales(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -84,11 +84,11 @@ async function getMonthlySales(req, res, next) {
 async function getDailySales(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getDailySales(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -106,11 +106,11 @@ async function getDailySales(req, res, next) {
 async function getProductPerformance(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getProductPerformance(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -128,11 +128,11 @@ async function getProductPerformance(req, res, next) {
 async function getCategoryPerformance(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getCategoryPerformance(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -150,11 +150,11 @@ async function getCategoryPerformance(req, res, next) {
 async function getCustomerPerformance(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getCustomerPerformance(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -172,10 +172,10 @@ async function getCustomerPerformance(req, res, next) {
 async function getInventoryAlerts(req, res, next) {
     try {
         const { category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getInventoryAlerts(
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -193,11 +193,11 @@ async function getInventoryAlerts(req, res, next) {
 async function getPaymentAnalysis(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getPaymentAnalysis(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -215,11 +215,11 @@ async function getPaymentAnalysis(req, res, next) {
 async function getProfitSummary(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getProfitSummary(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -237,11 +237,11 @@ async function getProfitSummary(req, res, next) {
 async function getProductInsights(req, res, next) {
     try {
         const { period, category } = getFilters(req);
+        const businessId = req.session.user.business_id;
 
         const data = await analyticsService.getProductInsights(
             period,
-            category
-        );
+            category, businessId);
 
         res.json({
             success: true,
@@ -258,7 +258,8 @@ async function getProductInsights(req, res, next) {
 
 async function getCategories(req, res, next) {
     try {
-        const data = await analyticsService.getCategories();
+        const businessId = req.session.user.business_id;
+        const data = await analyticsService.getCategories(businessId);
 
         res.json({
             success: true,

@@ -1,0 +1,216 @@
+<!-- Restock Modal -->
+<div class="modal-backdrop" id="restockModalBackdrop">
+  <div class="modal" style="max-width: 440px;">
+    <div class="modal-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+        <div>
+          <div class="modal-title" id="restockModalTitle">Restock product</div>
+          <div style="font-size: 13px; color: var(--muted); margin-top: 2px;">
+            Enter the additional stock quantity to add to inventory.
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeRestockModal()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <form id="restockForm" onsubmit="handleRestockSubmit(event)">
+      <input type="hidden" id="restockProductId" name="productId" />
+
+      <!-- Product stock summary card -->
+      <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px;">
+        <div id="restockProductName" style="font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 8px;">
+          Product
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--muted);">
+          <span>Current stock: <strong id="restockCurrentStock" style="color: var(--ink); font-weight: 600;">0</strong></span>
+          <span>Reorder level: <strong id="restockReorderLevel" style="color: var(--ink); font-weight: 600;">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Quantity input field -->
+      <div class="field" style="margin-bottom: 16px;">
+        <label for="restockQuantity" style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--ink);">
+          Additional units to add <span style="color: #dc2626;">*</span>
+        </label>
+        <input
+          type="number"
+          id="restockQuantity"
+          name="quantity"
+          class="form-control"
+          min="1"
+          step="1"
+          required
+          placeholder="e.g. 10"
+          style="width: 100%; height: 38px; padding: 8px 12px; font-size: 14px; border: 1px solid var(--line); border-radius: var(--radius); outline: none; background: var(--white); color: var(--ink);"
+        />
+        <div id="restockProjectedStock" style="margin-top: 6px; font-size: 12px; color: var(--muted); min-height: 18px;"></div>
+      </div>
+
+      <!-- Feedback message alert -->
+      <div id="restockFeedback" style="display: none; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-outline" onclick="closeRestockModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="restockSubmitBtn">Add stock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let restockCurrentStockVal = 0;
+  let restockReorderLevelVal = 0;
+
+  function openRestockModal(productId, productName, currentStock, reorderLevel) {
+    const backdrop = document.getElementById('restockModalBackdrop');
+    if (!backdrop) return;
+
+    restockCurrentStockVal = Number(currentStock || 0);
+    restockReorderLevelVal = Number(reorderLevel || 0);
+
+    document.getElementById('restockProductId').value = productId;
+    document.getElementById('restockProductName').textContent = productName || 'Product';
+    document.getElementById('restockCurrentStock').textContent = restockCurrentStockVal;
+    document.getElementById('restockReorderLevel').textContent = restockReorderLevelVal;
+
+    const input = document.getElementById('restockQuantity');
+    input.value = '';
+    
+    const feedback = document.getElementById('restockFeedback');
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    feedback.className = '';
+
+    const projected = document.getElementById('restockProjectedStock');
+    projected.textContent = '';
+    projected.style.color = 'var(--muted)';
+
+    const submitBtn = document.getElementById('restockSubmitBtn');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Add stock';
+
+    backdrop.classList.add('open');
+    setTimeout(() => input.focus(), 50);
+  }
+
+  function closeRestockModal() {
+    const backdrop = document.getElementById('restockModalBackdrop');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  // Live projected stock calculator
+  document.addEventListener('DOMContentLoaded', () => {
+    const qtyInput = document.getElementById('restockQuantity');
+    if (qtyInput) {
+      qtyInput.addEventListener('input', () => {
+        const projected = document.getElementById('restockProjectedStock');
+        const val = parseInt(qtyInput.value, 10);
+        if (isNaN(val) || val <= 0) {
+          projected.textContent = '';
+          return;
+        }
+        const newTotal = restockCurrentStockVal + val;
+        if (newTotal > restockReorderLevelVal) {
+          projected.textContent = `New total will be ${newTotal} (above reorder level ${restockReorderLevelVal})`;
+          projected.style.color = '#059669';
+        } else {
+          projected.textContent = `New total will be ${newTotal} (still at/below reorder level ${restockReorderLevelVal})`;
+          projected.style.color = '#d97706';
+        }
+      });
+    }
+
+    // Close on backdrop click
+    const backdrop = document.getElementById('restockModalBackdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) closeRestockModal();
+      });
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeRestockModal();
+    });
+  });
+
+  async function handleRestockSubmit(e) {
+    e.preventDefault();
+    const productId = document.getElementById('restockProductId').value;
+    const qtyInput = document.getElementById('restockQuantity');
+    const submitBtn = document.getElementById('restockSubmitBtn');
+    const feedback = document.getElementById('restockFeedback');
+
+    const quantity = parseInt(qtyInput.value, 10);
+    if (isNaN(quantity) || quantity < 1) {
+      feedback.style.display = 'block';
+      feedback.className = 'flash flash-error';
+      feedback.textContent = 'Please enter a valid positive quantity (1 or more).';
+      return;
+    }
+
+    // Prevent duplicate submission
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Updating stock...';
+    feedback.style.display = 'none';
+
+    try {
+      const response = await fetch(`/products/${productId}/restock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ quantity })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.success) {
+        feedback.style.display = 'block';
+        feedback.className = 'flash flash-success';
+        feedback.textContent = data.message || `Successfully added ${quantity} units!`;
+
+        // Refresh UI
+        setTimeout(() => {
+          closeRestockModal();
+
+          // If on dashboard, reload inventory alerts & recommendations
+          if (typeof loadInventoryAlerts === 'function') {
+            loadInventoryAlerts();
+          }
+          if (typeof loadBusinessRecommendations === 'function') {
+            loadBusinessRecommendations();
+          }
+          if (typeof loadSummary === 'function') {
+            loadSummary();
+          }
+
+          // If on products catalog page, update table or reload
+          const prodTable = document.querySelector('table');
+          if (prodTable && typeof openProductModal === 'function') {
+            window.location.reload();
+          }
+        }, 600);
+      } else {
+        feedback.style.display = 'block';
+        feedback.className = 'flash flash-error';
+        feedback.textContent = data.error || data.message || 'An error occurred while updating stock.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Add stock';
+      }
+    } catch (err) {
+      console.error('Restock error:', err);
+      feedback.style.display = 'block';
+      feedback.className = 'flash flash-error';
+      feedback.textContent = 'Network error. Please try again.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Add stock';
+    }
+  }
+</script>
