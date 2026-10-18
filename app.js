@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./config/env');
 const express = require('express');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const path = require('path');
@@ -15,8 +15,6 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const { isLoggedIn } = require('./middlewares/authMiddleware');
 const salesRoutes = require('./routes/salesRoutes');
 const customerRoutes = require('./routes/customerRoutes');
-// dashboardRoutes, authRoutes, customerRoutes, analyticsRoutes,
-// reportRoutes are added here the same way as each feature branch lands.
 
 const app = express();
 

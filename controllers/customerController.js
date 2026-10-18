@@ -1,5 +1,6 @@
 const { renderView, customerFilters } = require("../utils/viewLocals");
 const customerService = require("../services/customerService");
+const { wantsJson } = require("../utils/request");
 
 async function index(req, res) {
   const businessId = req.session.user.business_id;
@@ -33,7 +34,7 @@ async function search(req, res) {
 async function create(req, res) {
   const businessId = req.session.user.business_id;
   const customer = await customerService.createCustomer(businessId, req.body);
-  if (req.accepts("json")) return res.status(201).json(customer);
+  if (wantsJson(req)) return res.status(201).json({ success: true, customer, ...customer });
   req.flash("success", "Customer added successfully.");
   res.redirect("/customers");
 }
@@ -45,15 +46,16 @@ async function update(req, res) {
     businessId,
     req.body,
   );
-  if (req.accepts("json")) return res.json(customer);
+  if (wantsJson(req)) return res.json({ success: true, customer, ...customer });
   req.flash("success", "Customer updated successfully.");
-  res.redirect("/customers");
+  const returnTo = req.header("Referer") || `/customers/${req.params.id}`;
+  res.redirect(returnTo);
 }
 
 async function remove(req, res) {
   const businessId = req.session.user.business_id;
   await customerService.deleteCustomer(req.params.id, businessId);
-  if (req.accepts("json")) return res.status(204).send();
+  if (wantsJson(req)) return res.status(204).send();
   req.flash("success", "Customer deleted successfully.");
   res.redirect("/customers");
 }

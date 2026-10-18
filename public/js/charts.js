@@ -1129,32 +1129,5 @@ if (categoryFilter) {
     );
 }
 
-
-/* =================================================
-   REFRESH BUTTON
-   ================================================= */
-
-const refreshButton =
-    document.getElementById(
-        'refresh-dashboard'
-    );
-
-if (refreshButton) {
-
-    refreshButton.addEventListener(
-        'click',
-        () => {
-
-            console.log(
-                "Refreshing dashboard..."
-            );
-
-            loadFilteredDashboard();
-
-            loadInventoryAlerts();
-        }
-    );
-}        
-
     }
 );

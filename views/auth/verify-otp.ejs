@@ -1,0 +1,14 @@
+<%- include('../partials/head') %>
+<main class="auth-simple-page">
+  <section class="auth-card" aria-labelledby="otp-title">
+    <a class="auth-brand" href="/login">SmartBiz Insight</a>
+    <h1 class="card-title" id="otp-title">Verify your code</h1>
+    <p class="card-subtitle">Enter the six-digit code sent to your email. It expires after 10 minutes.</p>
+    <%- include('../partials/flash') %>
+    <form method="POST" action="/verify-otp">
+      <div class="field"><label for="otp">Verification code</label><input id="otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></div>
+      <button class="btn btn-primary auth-submit" type="submit">Verify code</button>
+    </form>
+    <p class="auth-link-row"><a href="/forgot-password">Request a new code</a></p>
+  </section>
+</main>

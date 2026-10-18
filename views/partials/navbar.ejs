@@ -5,9 +5,9 @@
   <div style="display:flex; align-items:center; gap:10px;"><button class="menu-toggle" type="button" data-sidebar-toggle aria-label="Toggle navigation">☰</button><div class="page-title"><%= title %></div></div>
   <div class="right">
     <% if (user) { %>
-      <span class="badge-role"><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></span>
       <div class="avatar"><%= initial %></div>
       <span><%= user.name %></span>
+      <% if (typeof isDemo !== 'undefined' && isDemo) { %><span style="font-size:11px; color:var(--muted);">DEMO</span><% } %>
       <form method="POST" action="/logout" style="display:inline; margin-left:8px;">
         <button type="submit" class="btn-link" style="background:none; border:none; padding:0; color:var(--primary); cursor:pointer; font-weight:500; font-size:13px;">Log out</button>
       </form>

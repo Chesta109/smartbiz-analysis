@@ -9,13 +9,30 @@ CREATE TABLE businesses (
 
 CREATE TABLE users (
   id            INT AUTO_INCREMENT PRIMARY KEY,
-  business_id   INT NOT NULL,
+  business_id   INT,
   name          VARCHAR(120)  NOT NULL,
   email         VARCHAR(160)  NOT NULL UNIQUE,
   password_hash VARCHAR(255)  NOT NULL,
+  email_verified TINYINT(1)   NOT NULL DEFAULT 0,
   role          ENUM('owner','manager','viewer') NOT NULL DEFAULT 'viewer',
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_users_business FOREIGN KEY (business_id) REFERENCES businesses(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE email_verification_tokens (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  purpose ENUM('registration', 'password_reset') NOT NULL,
+  otp_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  resend_count TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  last_sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  consumed_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_token_user_purpose (user_id, purpose),
+  KEY idx_tokens_expiry (expires_at),
+  CONSTRAINT fk_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE customers (

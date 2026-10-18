@@ -1,0 +1,61 @@
+<!-- Customer Add/Edit Modal -->
+<div class="modal-backdrop" id="customerModalBackdrop">
+  <div class="modal" style="max-width: 480px;">
+    <div class="modal-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+        <div>
+          <div class="modal-title" id="customerModalTitle">Add customer</div>
+          <div id="customerModalSubtitle" style="font-size: 13px; color: var(--muted); margin-top: 2px;">
+            Add a new customer to your directory.
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeCustomerModal()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="customerModalAlert" class="flash flash-error" style="display: none; margin-bottom: 16px;"></div>
+
+    <form id="customerForm" method="POST" action="/customers">
+      <input type="hidden" name="_method" id="cFormMethod" value="POST" />
+      <input type="hidden" id="c_id" name="id" value="" />
+
+      <div class="field" style="margin-bottom: 14px;">
+        <label for="c_name" style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--ink);">
+          Full Name <span style="color: #dc2626;">*</span>
+        </label>
+        <input type="text" name="name" id="c_name" required maxlength="120" placeholder="e.g. Priya Sharma" style="width: 100%; box-sizing: border-box;" />
+      </div>
+
+      <div class="field" style="margin-bottom: 14px;">
+        <label for="c_email" style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--ink);">
+          Email (optional)
+        </label>
+        <input type="email" name="email" id="c_email" maxlength="160" placeholder="e.g. priya@example.com" style="width: 100%; box-sizing: border-box;" />
+      </div>
+
+      <div class="field" style="margin-bottom: 14px;">
+        <label for="c_phone" style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--ink);">
+          Phone number (optional)
+        </label>
+        <input type="text" name="phone" id="c_phone" maxlength="30" placeholder="e.g. +91 98765 43210" style="width: 100%; box-sizing: border-box;" />
+      </div>
+
+      <div class="field" style="margin-bottom: 24px;">
+        <label for="c_address" style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--ink);">
+          Address (optional)
+        </label>
+        <input type="text" name="address" id="c_address" maxlength="255" placeholder="e.g. 42 MG Road, Bengaluru" style="width: 100%; box-sizing: border-box;" />
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" class="btn btn-outline" onclick="closeCustomerModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="customerSubmitBtn">Add customer</button>
+      </div>
+    </form>
+  </div>
+</div>

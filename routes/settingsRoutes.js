@@ -6,6 +6,10 @@ const asyncHandler = require("../middlewares/asyncHandler");
 const { renderView } = require("../utils/viewLocals");
 
 function requireManagerLocal(req, res, next) {
+  if (req.session?.isDemo) {
+    req.flash("error", "Settings are unavailable in the shared demonstration account.");
+    return res.redirect("/dashboard");
+  }
   if (req.session?.user?.role !== "manager" && req.session?.user?.role !== "owner") {
     req.flash("error", "Only managers can access Settings.");
     return res.redirect("/dashboard");

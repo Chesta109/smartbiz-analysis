@@ -1,6 +1,6 @@
 <%- include('../partials/appStart', { activeNav: '/products', title: 'Products', user: (typeof user !== 'undefined' ? user : null) }) %>
 
-<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--space-4); margin-top: 8px;">
+<div class="products-heading">
   <div>
     <h1 style="margin:0; font-size:24px; font-weight: 700; color: var(--ink);">Products</h1>
     <div style="color: var(--muted); font-size: 14px; margin-top: 4px;">Your product catalog and stock levels.</div>
@@ -13,7 +13,7 @@
     <div style="font-weight: 600; font-size: 16px; color: var(--ink); margin-bottom: 4px;"><%= products.length %> products</div>
     <div style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Manage your inventory and reorder levels.</div>
     
-    <form method="GET" action="/products" style="display: flex; gap: 12px; margin-bottom: 24px;">
+    <form method="GET" action="/products" class="products-filter-form">
       <div class="search-bar" style="flex: 2;">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         <input type="text" name="search" placeholder="Search products..." value="<%= filters.search %>" />
@@ -66,9 +66,15 @@
             <td><span class="<%= statusClass %> status-dot"><%= statusLabel %></span></td>
             <td style="padding-right: 24px; white-space: nowrap;">
               <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary); margin-right: 10px;"
-                 onclick='openProductModal(<%- JSON.stringify(p) %>); return false;'>Edit</a>
+                 data-product="<%= encodeURIComponent(JSON.stringify(p)) %>"
+                 onclick='openProductModal(JSON.parse(decodeURIComponent(this.dataset.product))); return false;'>Edit</a>
               <a href="#" style="font-size: 13px; font-weight: 500; color: var(--primary);"
-                 onclick='openRestockModal(<%= p.id %>, <%- JSON.stringify(p.name) %>, <%= p.stock_qty %>, <%= p.reorder_level %>); return false;'>Restock</a>
+                 data-name="<%= encodeURIComponent(p.name) %>"
+                 onclick='openRestockModal(<%= p.id %>, decodeURIComponent(this.dataset.name), <%= p.stock_qty %>, <%= p.reorder_level %>); return false;'>Restock</a>
+              <form method="POST" action="/products/<%= p.id %>" class="inline-action-form" onsubmit="return confirm('Delete this product? Products used in past sales are protected.');">
+                <input type="hidden" name="_method" value="DELETE">
+                <button class="action-link action-delete" type="submit">Delete</button>
+              </form>
             </td>
           </tr>
         <% }); %>

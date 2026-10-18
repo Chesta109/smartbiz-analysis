@@ -52,15 +52,28 @@
         <div class="field">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" required />
+          <div style="text-align: right; margin-top: 8px;"><a href="/forgot-password" style="font-size: 13px; font-weight: 500;">Forgot password?</a></div>
         </div>
         <button class="btn btn-primary" type="submit" style="width:100%; margin-top: 16px;">Sign in</button>
+      </form>
+      <div style="margin: 20px 0; border-top: 1px solid var(--border);"></div>
+      <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px;"><strong>Shared demonstration workspace</strong><br>Use the team demo password supplied by your project lead. Demo data is shared and editable.</div>
+      <form method="POST" action="/demo-login">
+        <div class="field">
+          <label for="demo-password">Demo access password</label>
+          <input type="password" id="demo-password" name="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn-secondary" type="submit" style="width:100%; margin-top: 8px;">Open shared demo</button>
       </form>
       <div style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted);">
         No account yet? <a href="/register" style="font-weight: 500;">Create one</a>
       </div>
+      <div style="text-align: center; margin-top: 10px; font-size: 13px; color: var(--muted);">
+        Waiting for verification? <a href="/verify-registration" style="font-weight: 500;">Resend your code</a>
+      </div>
       
       <div class="auth-secure" style="justify-content: center; text-align: center; margin-top: 24px; font-size: 11px;">
-        Access is role based: owner, manager and viewer see different actions.
+        One secure workspace for your business data and decisions.
       </div>
     </div>
   </div>
