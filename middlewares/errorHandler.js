@@ -1,4 +1,5 @@
 const logger = require("../utils/logger");
+const { wantsJson, safePageRedirect } = require("../utils/request");
 
 // Services throw these; controllers never build error shapes themselves.
 class AppError extends Error {
@@ -18,14 +19,13 @@ function errorHandler(err, req, res, next) {
     path: req.originalUrl,
   });
 
+  // Delivery/configuration messages are deliberately written as safe public
+  // guidance by emailService. All other 5xx errors remain opaque.
+  const safeOperationalEmailError = ["EMAIL_CONFIGURATION_ERROR", "EMAIL_DELIVERY_ERROR"].includes(type);
   const userMessage =
-    statusCode >= 500 ? "Something went wrong. Please try again." : err.message;
+    statusCode >= 500 && !safeOperationalEmailError ? "Something went wrong. Please try again." : err.message;
 
-  const wantsJson =
-    req.originalUrl.startsWith("/api/") ||
-    req.xhr ||
-    req.is("application/json");
-  if (wantsJson) {
+  if (wantsJson(req)) {
     return res.status(statusCode).json({ error: userMessage, type });
   }
 
@@ -35,7 +35,7 @@ function errorHandler(err, req, res, next) {
     return res.redirect("/login");
   }
 
-  return res.redirect("back");
+  return res.redirect(safePageRedirect(req));
 }
 
 module.exports = { errorHandler, AppError };

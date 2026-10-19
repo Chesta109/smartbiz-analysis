@@ -36,6 +36,7 @@ function buildViewLocals(req, data = {}) {
     title: data.title ?? "SmartBiz Insight",
     currentPath: req.path,
     user: req.session?.user ?? null,
+    isDemo: Boolean(req.session?.isDemo),
     filters: data.filters ?? defaultFilters(query),
     pagination: data.pagination ?? { ...DEFAULT_PAGINATION },
     customers: data.customers ?? [],

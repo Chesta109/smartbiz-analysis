@@ -1,32 +1,69 @@
-<%- include('../partials/appStart', { activeNav: '/customers', title, user: (typeof user !== 'undefined' ? user : null) }) %>
-      <a href="/customers" style="color: var(--color-text-muted); font-size: 13px;">&larr; Back to customers</a>
-      <h1 style="margin: var(--space-2) 0 0;"><%= customer.name %></h1>
-      <div class="card-subtitle">
-        <%= customer.email || 'No email on file' %> · <%= customer.phone || 'No phone on file' %>
-      </div>
+<%- include('../partials/appStart', { activeNav: '/customers', title: customer.name, user: (typeof user !== 'undefined' ? user : null) }) %>
 
-      <div class="card" style="margin-top: var(--space-4);">
-        <div class="card-title">Purchase history</div>
-        <div class="card-subtitle">Every line item this customer has purchased, most recent first.</div>
-        <table>
-          <thead>
-            <tr><th>Sale #</th><th>Date</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <% history.forEach(function(h) { %>
-              <tr>
-                <td>#<%= h.sale_id %></td>
-                <td><%= new Date(h.sale_date).toLocaleDateString() %></td>
-                <td><%= h.product_name %></td>
-                <td><%= h.quantity %></td>
-                <td>₹<%= Number(h.unit_price).toFixed(2) %></td>
-                <td><span class="<%= h.status === 'refunded' ? 'status-low' : 'status-ok' %> status-dot"><%= h.status %></span></td>
-              </tr>
-            <% }); %>
-            <% if (history.length === 0) { %>
-              <tr><td colspan="6" style="text-align:center; color: var(--color-text-muted);">No purchases yet.</td></tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); margin-top: 8px; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <a href="/customers" style="color: var(--muted); font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+      &larr; Back to customers
+    </a>
+    <h1 id="customer-show-title" style="margin: 0; font-size: 24px; font-weight: 700; color: var(--ink);"><%= customer.name %></h1>
+    <div style="color: var(--muted); font-size: 14px; margin-top: 4px;">Customer record #<%= customer.id %></div>
+  </div>
+  <button type="button" class="btn btn-primary" id="edit-customer-show-btn"
+          data-customer="<%= encodeURIComponent(JSON.stringify(customer)) %>"
+          onclick='openCustomerModal(JSON.parse(decodeURIComponent(this.dataset.customer))); return false;'>
+    Edit customer
+  </button>
+</div>
+
+<div class="card" style="margin-bottom: var(--space-4);">
+  <div class="card-title" style="margin-bottom: 16px;">Customer details</div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+    <div>
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 4px;">Full Name</div>
+      <div id="customer-show-name" style="font-size: 15px; font-weight: 500; color: var(--ink);"><%= customer.name %></div>
+    </div>
+    <div>
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 4px;">Email Address</div>
+      <div id="customer-show-email" style="font-size: 15px; color: var(--ink);"><%= customer.email || '—' %></div>
+    </div>
+    <div>
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 4px;">Phone Number</div>
+      <div id="customer-show-phone" style="font-size: 15px; color: var(--ink);"><%= customer.phone || '—' %></div>
+    </div>
+    <div>
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 4px;">Address</div>
+      <div id="customer-show-address" style="font-size: 15px; color: var(--ink);"><%= customer.address || '—' %></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Purchase history</div>
+  <div class="card-subtitle">Every line item this customer has purchased, most recent first.</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Sale #</th><th>Date</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <% history.forEach(function(h) { %>
+          <tr>
+            <td>#<%= h.sale_id %></td>
+            <td><%= new Date(h.sale_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></td>
+            <td style="font-weight: 500;"><%= h.product_name %></td>
+            <td><%= h.quantity %></td>
+            <td>₹<%= Number(h.unit_price).toFixed(2) %></td>
+            <td><span class="<%= h.status === 'refunded' ? 'status-low' : 'status-ok' %> status-dot"><%= h.status %></span></td>
+          </tr>
+        <% }); %>
+        <% if (history.length === 0) { %>
+          <tr><td colspan="6" style="text-align:center; color: var(--muted); padding: 32px 0;">No purchases yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/customerModal') %>
+<script src="/js/customers.js"></script>
 <%- include('../partials/appEnd') %>

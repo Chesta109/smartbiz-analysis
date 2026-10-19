@@ -41,7 +41,14 @@ async function updateProduct(id, businessId, data) {
 
 async function deleteProduct(id, businessId) {
   await getProduct(id, businessId);
-  return productModel.remove(id, businessId);
+  try {
+    return await productModel.remove(id, businessId);
+  } catch (err) {
+    if (err.code === "ER_ROW_IS_REFERENCED_2") {
+      throw new AppError("This product is used in past sales and cannot be deleted.", 409, "PRODUCT_IN_USE");
+    }
+    throw err;
+  }
 }
 
 async function restockProduct(id, businessId, quantity) {

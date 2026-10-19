@@ -21,7 +21,7 @@
   </div>
   <nav>
     <% navItems.forEach(function(item) { %>
-      <% if (item.label === 'Settings' && (!user || user.role !== 'manager')) return; %>
+      <% if (item.label === 'Settings' && (!user || isDemo || (user.role !== 'manager' && user.role !== 'owner'))) return; %>
       <a class="nav-item <%= currentPath === item.href ? 'active' : '' %>" href="<%= item.href %>">
         <%- item.icon %>
         <%= item.label %>

@@ -10,7 +10,7 @@ async function update(req, res, next) {
       res.redirect("/settings");
     });
   } catch (err) {
-    if (err.message === "That email is already in use." || err.message === "Invalid name." || err.message === "Invalid email.") {
+    if (err.statusCode && err.statusCode < 500) {
       req.flash("error", err.message);
       return res.redirect("/settings");
     }

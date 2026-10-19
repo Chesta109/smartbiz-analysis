@@ -1,0 +1,19 @@
+<%- include('../partials/head') %>
+<main class="auth-simple-page">
+  <section class="auth-card" aria-labelledby="verify-title">
+    <a class="auth-brand" href="/login">SmartBiz Insight</a>
+    <h1 class="card-title" id="verify-title">Verify your email</h1>
+    <p class="card-subtitle">Enter the six-digit code we sent to activate your account.</p>
+    <%- include('../partials/flash') %>
+    <form method="POST" action="/verify-registration">
+      <div class="field"><label for="email">Registration email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="otp">Verification code</label><input id="otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></div>
+      <button class="btn btn-primary auth-submit" type="submit">Verify email</button>
+    </form>
+    <form method="POST" action="/verify-registration/resend" class="auth-link-row">
+      <label class="sr-only" for="resend-email">Registration email</label>
+      <input id="resend-email" name="email" type="email" autocomplete="email" required placeholder="Email for resend">
+      <button type="submit" class="action-link">Resend verification code</button>
+    </form>
+  </section>
+</main>

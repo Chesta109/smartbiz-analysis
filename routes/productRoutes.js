@@ -44,7 +44,7 @@ router.post(
 
 router.delete(
   "/:id",
-  requireRole("owner"),
+  requireRole("owner", "manager"),
   productValidation.idParam,
   validateRequest,
   asyncHandler(productController.remove),

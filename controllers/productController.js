@@ -1,5 +1,6 @@
 const productService = require("../services/productService");
 const { renderView, productFilters } = require("../utils/viewLocals");
+const { wantsJson } = require("../utils/request");
 
 async function index(req, res) {
   const businessId = req.session.user.business_id;
@@ -28,7 +29,7 @@ async function show(req, res) {
 async function create(req, res) {
   const businessId = req.session.user.business_id;
   const product = await productService.createProduct(businessId, req.body);
-  if (!req.originalUrl.startsWith("/api/") && !req.accepts("json")) {
+  if (!wantsJson(req)) {
     req.flash("success", "Product added successfully.");
     return res.redirect("/products");
   }
@@ -38,7 +39,7 @@ async function create(req, res) {
 async function update(req, res) {
   const businessId = req.session.user.business_id;
   const product = await productService.updateProduct(req.params.id, businessId, req.body);
-  if (!req.originalUrl.startsWith("/api/") && !req.accepts("json")) {
+  if (!wantsJson(req)) {
     req.flash("success", "Product updated successfully.");
     return res.redirect("/products");
   }
@@ -48,7 +49,7 @@ async function update(req, res) {
 async function remove(req, res) {
   const businessId = req.session.user.business_id;
   await productService.deleteProduct(req.params.id, businessId);
-  if (!req.originalUrl.startsWith("/api/") && !req.accepts("json")) {
+  if (!wantsJson(req)) {
     req.flash("success", "Product deleted successfully.");
     return res.redirect("/products");
   }
@@ -63,16 +64,13 @@ async function restock(req, res) {
     req.body.quantity,
   );
   if (
-    !req.originalUrl.startsWith("/api/") &&
-    !req.xhr &&
-    !req.is("application/json") &&
-    (!req.headers.accept || req.headers.accept.indexOf("application/json") === -1)
+    !wantsJson(req)
   ) {
     req.flash(
       "success",
       `Restocked ${product.name} (+${req.body.quantity}). New stock: ${product.stock_qty}`,
     );
-    return res.redirect("back");
+    return res.redirect("/products");
   }
   res.json({
     success: true,

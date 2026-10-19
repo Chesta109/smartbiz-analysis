@@ -3,13 +3,10 @@ const { sanitizeUser } = require("./authService");
 const { AppError } = require("../middlewares/errorHandler");
 async function updateProfile(userId, data) {
   const name = data.name?.trim();
-  const email = data.email?.trim().toLowerCase();
-  if (!name || name.length > 120) throw new Error("Invalid name.");
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || email.length > 160 || !emailRegex.test(email)) throw new Error("Invalid email.");
-  const existing = await userModel.findByEmail(email);
-  if (existing && existing.id !== Number(userId))
-    throw new Error("That email is already in use.");
-  return sanitizeUser(await userModel.updateProfile(userId, { name, email }));
+  if (!name || name.length > 120) throw new AppError("Invalid name.", 422, "VALIDATION_ERROR");
+  if (Object.hasOwn(data, "email")) {
+    throw new AppError("Email changes are not available from Settings.", 422, "EMAIL_CHANGE_DISABLED");
+  }
+  return sanitizeUser(await userModel.updateName(userId, name));
 }
 module.exports = { updateProfile };

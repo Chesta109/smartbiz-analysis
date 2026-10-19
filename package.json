@@ -8,9 +8,16 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test tests/analytics/pythonBridge.test.js tests/backend/salesReport.test.js tests/backend/demoAuth.test.js tests/backend/settingsService.test.js tests/backend/customerModel.integration.js && node tests/backend/authFlow.integration.js",
     "start": "node app.js",
-    "dev": "node --watch app.js"
+    "dev": "node --watch app.js",
+    "test:auth": "node tests/backend/authFlow.integration.js",
+    "db:migrate:email": "node scripts/migrateEmailVerification.js",
+    "cleanup:pending": "node scripts/cleanupPendingAccounts.js",
+    "email:verify": "node scripts/verifySmtp.js",
+    "demo:seed": "python scripts/generate_business_data.py --demo --yes",
+    "demo:reset": "python scripts/generate_business_data.py --demo --reset --yes",
+    "business:reset": "node scripts/resetBusinessData.js"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +33,7 @@
     "express-session": "^1.19.0",
     "express-validator": "^7.3.2",
     "mysql2": "^3.23.2",
+    "nodemailer": "^7.0.13",
     "pdfkit": "^0.19.1"
   }
 }

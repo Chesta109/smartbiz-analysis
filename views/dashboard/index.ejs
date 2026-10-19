@@ -1,12 +1,11 @@
-<script src="/js/charts.js"></script>
 <%- include('../partials/appStart', { activeNav: '/dashboard', title: 'Dashboard', user }) %>
 
-<div style="display: flex; justify-content: space-between; align-items: flex-start;">
-  <section class="page-heading">
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 8px;">
+  <section class="page-heading" style="margin-bottom: 0;">
     <h1 style="font-size: 20px;">Dashboard</h1>
     <p>Business overview and decision insights.</p>
   </section>
-  <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center;">
+  <div class="dashboard-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
 
     <!-- Date Filter -->
     <select
@@ -15,8 +14,6 @@
         style="width: auto; height: 36px; font-size: 13px;"
     >
         <option value="30" selected>Last 30 days</option>
-        <option value="7">Last 7 days</option>
-        <option value="90">Last 90 days</option>
         <option value="this_month">This month</option>
         <option value="last_month">Last month</option>
         <option value="this_year">This year</option>
@@ -35,30 +32,6 @@
         </option>
     </select>
 
-
-    <!-- Refresh -->
-    <button
-        id="refresh-dashboard"
-        class="btn btn-secondary"
-        style="height: 36px; font-size: 13px;"
-    >
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            style="width: 14px; height: 14px;"
-        >
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-
-        Refresh
-    </button>
-    
 </div>
 </div>
 
@@ -76,7 +49,7 @@
 <% }) %>
 </div>
 
-<div class="grid" style="grid-template-columns: 1fr 1fr; margin-bottom: var(--space-4);">
+<div class="grid grid-2" style="margin-bottom: var(--space-4);">
   <section class="card" style="display: flex; flex-direction: column;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
       <div>
@@ -113,7 +86,7 @@
   </section>
 </div>
 
-<div class="grid" style="grid-template-columns: 2fr 1fr; margin-bottom: var(--space-4);">
+<div class="grid grid-2-1" style="margin-bottom: var(--space-4);">
   <section class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
       <div>
@@ -157,4 +130,5 @@
 <%- include('_forecast') %>
 <%- include('../partials/restockModal') %>
 
+<script src="/js/charts.js"></script>
 <%- include('../partials/appEnd') %>
